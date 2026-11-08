@@ -1,45 +1,46 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
+import React, { useEffect } from 'react';
+import { AppState, StatusBar, StyleSheet, View } from 'react-native';
+import { DefaultTheme, NavigationContainer } from '@react-navigation/native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import Routes from './src/routes/Routes';
+import SoundPlayer from './src/utills/SoundPlayer';
+import Tts from 'react-native-tts';
 
-import { NewAppScreen } from '@react-native/new-app-screen';
-import { StatusBar, StyleSheet, useColorScheme, View } from 'react-native';
-import {
-  SafeAreaProvider,
-  useSafeAreaInsets,
-} from 'react-native-safe-area-context';
+const navigationTheme = {
+  ...DefaultTheme,
+  colors: { ...DefaultTheme.colors, background: '#daf5f7' },
+};
 
-function App() {
-  const isDarkMode = useColorScheme() === 'dark';
+function stopAudio() {
+  SoundPlayer.stop();
+  Tts.stop().catch(() => {});
+}
+
+export default function App() {
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', state => {
+      if (state !== 'active') {
+        stopAudio();
+      }
+    });
+    return () => {
+      subscription.remove();
+      stopAudio();
+    };
+  }, []);
 
   return (
     <SafeAreaProvider>
-      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-      <AppContent />
+      <View style={styles.container}>
+        <StatusBar hidden />
+        <NavigationContainer theme={navigationTheme} onStateChange={stopAudio}>
+          <Routes />
+        </NavigationContainer>
+      </View>
     </SafeAreaProvider>
   );
 }
 
-function AppContent() {
-  const safeAreaInsets = useSafeAreaInsets();
-
-  return (
-    <View style={styles.container}>
-      <NewAppScreen
-        templateFileName="App.tsx"
-        safeAreaInsets={safeAreaInsets}
-      />
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
+  container: { flex: 1, backgroundColor: '#daf5f7' },
 });
-
-export default App;

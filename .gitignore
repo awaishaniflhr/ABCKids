@@ -66,6 +66,12 @@ yarn-error.log
 # testing
 /coverage
 
+# Local migration verification and release credentials
+.migration-build/
+migration-lint.json
+android/keystore.properties
+*.jks
+
 # Yarn
 .yarn/*
 !.yarn/patches

@@ -1,6 +1,7 @@
 package com.abckids
 
 import android.app.Application
+import org.wonday.orientation.OrientationActivityLifecycle
 import com.facebook.react.PackageList
 import com.facebook.react.ReactApplication
 import com.facebook.react.ReactHost
@@ -14,6 +15,7 @@ class MainApplication : Application(), ReactApplication {
       context = applicationContext,
       packageList =
         PackageList(this).packages.apply {
+          add(DrawingGalleryPackage())
           // Packages that cannot be autolinked yet can be added manually here, for example:
           // add(MyReactNativePackage())
         },
@@ -22,6 +24,7 @@ class MainApplication : Application(), ReactApplication {
 
   override fun onCreate() {
     super.onCreate()
+    registerActivityLifecycleCallbacks(OrientationActivityLifecycle.getInstance())
     loadReactNative(this)
   }
 }

@@ -1,0 +1,5 @@
+.migration-build/
+android/
+ios/
+scripts/
+patches/
