@@ -2,6 +2,7 @@ import React, {
   memo,
   useCallback,
   useEffect,
+  useMemo,
   useReducer,
   useRef,
   useState,
@@ -27,6 +28,9 @@ import SoundPlayer from '../utills/SoundPlayer';
 import {
   createRound,
   getDifficulty,
+  getDistractorLetters,
+  getBalloonY,
+  findBalloonAtPoint,
   roundReducer,
   ROUND_SECONDS,
   TARGET_SCORE,
@@ -55,7 +59,7 @@ const SPARKLES = [
     top: '26%',
   },
 ];
-function PopFeedback({ pop }) {
+function PopFeedback({ pop, targetLetter }) {
   const progress = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     const animation = Animated.timing(progress, {
@@ -69,6 +73,8 @@ function PopFeedback({ pop }) {
   }, [progress]);
   const message = pop.isBomb
     ? 'Oops! Avoid the bombs'
+    : !pop.isTarget
+    ? `Find ${targetLetter}!`
     : pop.streak >= 3
     ? `${pop.streak} in a row! +1`
     : 'Great pop! +1';
@@ -78,6 +84,7 @@ function PopFeedback({ pop }) {
       style={[
         styles.feedback,
         pop.isBomb && styles.bombFeedback,
+        !pop.isBomb && !pop.isTarget && styles.wrongFeedback,
         {
           opacity: progress.interpolate({
             inputRange: [0, 0.12, 0.7, 1],
@@ -180,10 +187,10 @@ function RoundResult({ round, navigation, onReplay, insets }) {
 }
 const Balloon = memo(function Balloon({
   item,
-  letter,
   running,
   onPop,
   onExpire,
+  onMotion,
 }) {
   const position = useRef(new Animated.Value(item.startY)).current;
   const remaining = useRef(item.duration);
@@ -194,6 +201,16 @@ const Balloon = memo(function Balloon({
       return;
     }
     const started = Date.now();
+    const motion = {
+      startedAt: started,
+      startY:
+        -item.size +
+        ((item.startY + item.size) * remaining.current) / item.duration,
+      endY: -item.size,
+      duration: remaining.current,
+    };
+    position.setValue(motion.startY);
+    onMotion(item.id, motion);
     const animation = Animated.timing(position, {
       toValue: -item.size,
       duration: remaining.current,
@@ -212,8 +229,10 @@ const Balloon = memo(function Balloon({
         remaining.current - (Date.now() - started),
       );
       animation.stop();
+      position.setValue(getBalloonY(motion, Date.now()));
+      onMotion(item.id, null);
     };
-  }, [item, position, running, onExpire]);
+  }, [item, position, running, onExpire, onMotion]);
   function pop() {
     if (!running || popped.current) {
       return;
@@ -242,7 +261,7 @@ const Balloon = memo(function Balloon({
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={
-          item.isBomb ? 'Avoid bomb' : `Pop ${letter} balloon`
+          item.isBomb ? 'Avoid bomb' : `Pop ${item.letter} balloon`
         }
         disabled={!running}
         onPressIn={pop}
@@ -285,7 +304,7 @@ const Balloon = memo(function Balloon({
                   },
                 ]}
               >
-                {letter}
+                {item.letter}
               </Text>
             </>
           )}
@@ -300,6 +319,7 @@ export default function BalloonPopping({ navigation, route }) {
   const portraitHeader = width < 500;
   const requestedLetter = String(route?.params?.Letter ?? 'A').toUpperCase();
   const letter = /^[A-Z]$/.test(requestedLetter) ? requestedLetter : 'A';
+  const distractors = useMemo(() => getDistractorLetters(letter), [letter]);
   const focused = useIsFocused();
   const [foreground, setForeground] = useState(
     AppState.currentState !== 'background' &&
@@ -323,7 +343,9 @@ export default function BalloonPopping({ navigation, route }) {
   const remainingMs = useRef(ROUND_SECONDS * 1000);
   const deadline = useRef(0);
   const counter = useRef(0);
-  const consecutiveBombs = useRef(0);
+  const letterCounter = useRef(0);
+  const consecutiveNonTargets = useRef(0);
+  const motions = useRef(new Map());
   const readyToSpeak = useRef(false);
   const runningRef = useRef(false);
   const roundRef = useRef(round);
@@ -393,12 +415,21 @@ export default function BalloonPopping({ navigation, route }) {
       const difficulty = getDifficulty(
         Math.ceil((deadline.current - Date.now()) / 1000),
       );
-      // Leave a safe letter after at most two bombs, even in the final rush.
+      // Keep the selected letter common, with at most two non-targets in a row.
+      const forceTarget = consecutiveNonTargets.current >= 2;
       const isBomb =
         counter.current > 1 &&
-        consecutiveBombs.current < 2 &&
+        !forceTarget &&
         Math.random() < difficulty.bombChance;
-      consecutiveBombs.current = isBomb ? consecutiveBombs.current + 1 : 0;
+      const letterIndex = isBomb ? -1 : letterCounter.current++;
+      const isDistractor = !isBomb && !forceTarget && letterIndex % 4 === 3;
+      const balloonLetter = isDistractor
+        ? distractors[Math.floor(letterIndex / 4) % distractors.length]
+        : letter;
+      const isTarget = !isBomb && !isDistractor;
+      consecutiveNonTargets.current = isTarget
+        ? 0
+        : consecutiveNonTargets.current + 1;
       dispatch({
         type: 'spawn',
         roundId,
@@ -417,6 +448,8 @@ export default function BalloonPopping({ navigation, route }) {
           duration: difficulty.flightMs + Math.random() * 800,
           color: counter.current % 2,
           isBomb,
+          isTarget,
+          letter: isBomb ? null : balloonLetter,
         },
       });
     }
@@ -450,7 +483,7 @@ export default function BalloonPopping({ navigation, route }) {
       clearInterval(clock);
       clearTimeout(ending);
     };
-  }, [running, board.width, board.height, round.roundId]);
+  }, [running, board.width, board.height, round.roundId, letter, distractors]);
   useEffect(() => {
     if (
       !focused ||
@@ -472,6 +505,13 @@ export default function BalloonPopping({ navigation, route }) {
       roundId,
       id,
     });
+  }, []);
+  const trackMotion = useCallback((id, motion) => {
+    if (motion) {
+      motions.current.set(id, motion);
+    } else {
+      motions.current.delete(id);
+    }
   }, []);
   const pop = useCallback(
     item => {
@@ -499,8 +539,10 @@ export default function BalloonPopping({ navigation, route }) {
         roundId: item.roundId,
         id: item.id,
       });
-      SoundPlayer.playSoundFile(item.isBomb ? 'bomb' : 'done', 'mp3');
-      if (!item.isBomb && readyToSpeak.current) {
+      if (item.isBomb || item.isTarget) {
+        SoundPlayer.playSoundFile(item.isBomb ? 'bomb' : 'done', 'mp3');
+      }
+      if (item.isTarget && readyToSpeak.current) {
         Tts.stop()
           .then(() => {
             if (
@@ -514,6 +556,31 @@ export default function BalloonPopping({ navigation, route }) {
       }
     },
     [letter],
+  );
+  const touchBoard = useCallback(
+    ({ nativeEvent }) => {
+      if (!runningRef.current) {
+        return;
+      }
+      // This empty overlay is always the native touch target, so locationX/Y
+      // stay relative to the board, independent of each animated child.
+      const touches = nativeEvent.changedTouches?.length
+        ? nativeEvent.changedTouches
+        : [nativeEvent];
+      for (const touch of touches) {
+        const item = findBalloonAtPoint(
+          roundRef.current.balloons,
+          motions.current,
+          { x: touch.locationX, y: touch.locationY },
+          Date.now(),
+          poppedIds.current,
+        );
+        if (item) {
+          pop(item);
+        }
+      }
+    },
+    [pop],
   );
   const measureBoard = useCallback(({ nativeEvent: { layout } }) => {
     if (
@@ -541,7 +608,9 @@ export default function BalloonPopping({ navigation, route }) {
     remainingMs.current = ROUND_SECONDS * 1000;
     poppedIds.current.clear();
     counter.current = 0;
-    consecutiveBombs.current = 0;
+    letterCounter.current = 0;
+    consecutiveNonTargets.current = 0;
+    motions.current.clear();
     SoundPlayer.stop();
     dispatch({
       type: 'reset',
@@ -580,8 +649,8 @@ export default function BalloonPopping({ navigation, route }) {
               <Text style={styles.title}>Pop the letter {letter}</Text>
               <Text style={styles.instructions}>
                 {round.timeLeft <= 8 && round.status === 'playing'
-                  ? 'Bomb rush! Watch out!'
-                  : `Pop ${TARGET_SCORE} balloons. Bombs take 1 point!`}
+                  ? `Keep finding ${letter}! Avoid the bombs!`
+                  : `Only ${letter}: +1. Other letters: 0. Bombs: -1.`}
               </Text>
               <View
                 accessibilityRole="progressbar"
@@ -658,14 +727,26 @@ export default function BalloonPopping({ navigation, route }) {
               <Balloon
                 key={item.id}
                 item={item}
-                letter={letter}
                 running={running}
                 onPop={pop}
                 onExpire={expire}
+                onMotion={trackMotion}
               />
             ))}
+          <View
+            testID="balloon-touch-surface"
+            accessible={false}
+            pointerEvents={running ? 'box-only' : 'none'}
+            style={StyleSheet.absoluteFill}
+            onStartShouldSetResponder={() => running}
+            onTouchStart={touchBoard}
+          />
           {running && round.lastPop && (
-            <PopFeedback key={round.lastPop.id} pop={round.lastPop} />
+            <PopFeedback
+              key={round.lastPop.id}
+              pop={round.lastPop}
+              targetLetter={letter}
+            />
           )}
           {round.status === 'playing' && !foreground && (
             <View style={styles.overlay}>
@@ -796,6 +877,9 @@ const styles = StyleSheet.create({
   },
   bombFeedback: {
     backgroundColor: '#b74b39',
+  },
+  wrongFeedback: {
+    backgroundColor: '#806216',
   },
   feedbackText: {
     color: 'white',

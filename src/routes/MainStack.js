@@ -9,6 +9,8 @@ import ColorsTemplate from '../screens/ColorsTemplate';
 import Loader from '../screens/Loader';
 import DragLetters from '../screens/DragLetters';
 import Letters from '../screens/Letters';
+import TracingLetters from '../screens/TracingLetters';
+import LetterTracing from '../screens/LetterTracing';
 import BalloonPopping from '../screens/BalloonPopping';
 import Numbers from '../screens/Numbers';
 import Numeric from '../screens/Numeric';
@@ -69,6 +71,16 @@ const MainStack = () => {
         <Stack.Screen
           name="Letters"
           component={Letters}
+          options={{headerShown: false}}
+        />
+        <Stack.Screen
+          name="TracingLetters"
+          component={TracingLetters}
+          options={{headerShown: false}}
+        />
+        <Stack.Screen
+          name="LetterTracing"
+          component={LetterTracing}
           options={{headerShown: false}}
         />
         <Stack.Screen

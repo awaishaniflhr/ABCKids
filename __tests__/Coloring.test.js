@@ -190,7 +190,7 @@ describe('colouring screen', () => {
     expect(region('tail').props.fill).toBe(red);
   });
 
-  test.each(['fish', 'cat', 'car', 'butterfly', 'dog', 'ball'])(
+  test.each(COLORING_TEMPLATES.map(template => template.id))(
     'opens %s and saves independently',
     async id => {
       await mount(id);
@@ -374,6 +374,22 @@ describe('colouring screen', () => {
   });
 
   test('the redesigned gallery opens each corresponding sketch', async () => {
+    expect(COLORING_TEMPLATES.length).toBeGreaterThanOrEqual(12);
+    expect(new Set(COLORING_TEMPLATES.map(template => template.id)).size).toBe(
+      COLORING_TEMPLATES.length,
+    );
+    expect(
+      new Set(COLORING_TEMPLATES.map(template => template.name)).size,
+    ).toBe(COLORING_TEMPLATES.length);
+    expect(
+      new Set(
+        COLORING_TEMPLATES.map(template =>
+          JSON.stringify(
+            template.regions.map(({ type, props }) => ({ type, props })),
+          ),
+        ),
+      ).size,
+    ).toBe(COLORING_TEMPLATES.length);
     const navigate = jest.fn();
     await ReactTestRenderer.act(async () => {
       screen = ReactTestRenderer.create(
@@ -382,6 +398,7 @@ describe('colouring screen', () => {
         </SafeAreaProvider>,
       );
     });
+    expect(JSON.stringify(screen.toJSON())).toContain('fun pictures');
     for (const template of COLORING_TEMPLATES) {
       await press(`Colour ${template.name.toLowerCase()}`);
       expect(navigate).toHaveBeenLastCalledWith('Coloring', {

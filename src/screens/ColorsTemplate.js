@@ -53,7 +53,9 @@ export default function ColorsTemplate({ navigation }) {
           </Text>
         </View>
         <View style={styles.badge}>
-          <Text style={styles.badgeText}>6 fun pictures</Text>
+          <Text style={styles.badgeText}>
+            {COLORING_TEMPLATES.length} fun pictures
+          </Text>
         </View>
       </View>
       <FlatList

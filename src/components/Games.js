@@ -10,6 +10,7 @@ import {
   View,
 } from 'react-native';
 import SoundPlayer from '../utills/SoundPlayer';
+import TracingIcon from './TracingIcon';
 
 export const gameData = [
   {
@@ -19,6 +20,14 @@ export const gameData = [
     screen: 'Letters',
     color: '#1c8fbc',
     shadow: '#126c91',
+  },
+  {
+    id: 'tracing',
+    name: 'Letter Tracing',
+    icon: 'tracing',
+    screen: 'TracingLetters',
+    color: '#8d83d7',
+    shadow: '#685cae',
   },
   {
     id: 'balloons',
@@ -136,11 +145,15 @@ const GameCard = memo(function GameCard({ item, width, height, onSelect }) {
             style={styles.artwork}
           >
             <View pointerEvents="none" style={styles.highlight} />
-            <Image
-              source={item.Image}
-              resizeMode="contain"
-              style={{ width: imageSize, height: imageSize }}
-            />
+            {item.icon === 'tracing' ? (
+              <TracingIcon size={imageSize} />
+            ) : (
+              <Image
+                source={item.Image}
+                resizeMode="contain"
+                style={{ width: imageSize, height: imageSize }}
+              />
+            )}
           </ImageBackground>
           <View style={styles.caption}>
             <Text
