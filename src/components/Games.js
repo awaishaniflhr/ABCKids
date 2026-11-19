@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import SoundPlayer from '../utills/SoundPlayer';
 import TracingIcon from './TracingIcon';
+import MatchingIcon from './MatchingIcon';
 
 export const gameData = [
   {
@@ -18,6 +19,7 @@ export const gameData = [
     name: 'Letters',
     Image: require('../assets/abc.png'),
     screen: 'Letters',
+    hidden: true,
     color: '#1c8fbc',
     shadow: '#126c91',
   },
@@ -28,6 +30,14 @@ export const gameData = [
     screen: 'TracingLetters',
     color: '#8d83d7',
     shadow: '#685cae',
+  },
+  {
+    id: 'number-tracing',
+    name: 'Number Tracing',
+    icon: 'number-tracing',
+    screen: 'TracingNumbers',
+    color: '#f2b13d',
+    shadow: '#c98a1c',
   },
   {
     id: 'balloons',
@@ -42,13 +52,14 @@ export const gameData = [
     name: 'Numbers',
     Image: require('../assets/7.png'),
     screen: 'Numbers',
+    hidden: true,
     color: '#ef9c43',
     shadow: '#c97625',
   },
   {
     id: 'matching',
     name: 'Matching',
-    Image: require('../assets/matching.jpg'),
+    icon: 'matching',
     screen: 'AlphabetsShapes',
     color: '#30a58d',
     shadow: '#1e7f6b',
@@ -111,6 +122,9 @@ export const gameData = [
   },
 ];
 
+// Games marked `hidden` keep their screens and routes but are not shown on Home.
+export const visibleGames = gameData.filter(item => !item.hidden);
+
 const GAP = 12;
 
 const GameCard = memo(function GameCard({ item, width, height, onSelect }) {
@@ -145,8 +159,13 @@ const GameCard = memo(function GameCard({ item, width, height, onSelect }) {
             style={styles.artwork}
           >
             <View pointerEvents="none" style={styles.highlight} />
-            {item.icon === 'tracing' ? (
-              <TracingIcon size={imageSize} />
+            {item.icon === 'matching' ? (
+              <MatchingIcon size={imageSize} />
+            ) : item.icon === 'tracing' || item.icon === 'number-tracing' ? (
+              <TracingIcon
+                size={imageSize}
+                variant={item.icon === 'number-tracing' ? 'number' : 'letter'}
+              />
             ) : (
               <Image
                 source={item.Image}
@@ -211,7 +230,7 @@ export default function Games({ navigation }) {
         {gridWidth > 0 && (
           <FlatList
             key={columns}
-            data={gameData}
+            data={visibleGames}
             numColumns={columns}
             keyExtractor={item => item.id}
             renderItem={({ item }) => (

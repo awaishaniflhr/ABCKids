@@ -1,7 +1,11 @@
 import React from 'react';
 import Svg, { Circle, G, Path, Rect } from 'react-native-svg';
 
-export default function TracingIcon({ size = 80 }) {
+const LETTER_PATH = 'M24 73 L44 24 L64 73 M31 57 L57 57';
+const NUMBER_PATH = 'M26 38 C28 18 62 20 58 42 L26 74 L62 74';
+
+export default function TracingIcon({ size = 80, variant = 'letter' }) {
+  const d = variant === 'number' ? NUMBER_PATH : LETTER_PATH;
   return (
     <Svg width={size} height={size} viewBox="0 0 100 100">
       <Rect
@@ -15,7 +19,7 @@ export default function TracingIcon({ size = 80 }) {
         strokeWidth={4}
       />
       <Path
-        d="M24 73 L44 24 L64 73 M31 57 L57 57"
+        d={d}
         stroke="#B1ABED"
         strokeWidth={13}
         strokeLinecap="round"
@@ -23,7 +27,7 @@ export default function TracingIcon({ size = 80 }) {
         fill="none"
       />
       <Path
-        d="M24 73 L44 24 L64 73 M31 57 L57 57"
+        d={d}
         stroke="#FFFFFF"
         strokeWidth={7}
         strokeLinecap="round"

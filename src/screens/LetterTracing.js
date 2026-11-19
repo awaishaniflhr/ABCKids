@@ -17,6 +17,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import BackButton from '../components/BackButton';
 import TraceBuddy from '../components/TraceBuddy';
 import TracingCanvas from '../components/TracingCanvas';
+import FunnyLetter from '../components/FunnyLetter';
 import {
   createTrace,
   getTracingLetter,
@@ -47,7 +48,7 @@ const SPARKLES = [
   { x: 0.9, y: 0.45, color: '#F26468' },
 ];
 
-function Celebration({ animate, nextLetter, compact }) {
+function Celebration({ animate, nextLetter, compact, finishText }) {
   const reveal = useRef(new Animated.Value(animate ? 0 : 1)).current;
   const badgeOpacity = animate
     ? reveal.interpolate({
@@ -147,7 +148,7 @@ function Celebration({ animate, nextLetter, compact }) {
           </Text>
         </View>
         <Text style={styles.successNext}>
-          {nextLetter ? `Next: ${nextLetter}` : 'Back to your letters'}
+          {nextLetter ? `Next: ${nextLetter}` : finishText}
         </Text>
       </Animated.View>
     </View>
@@ -182,7 +183,7 @@ function Control({ label, symbol, onPress, disabled, primary }) {
   );
 }
 
-function TracingRound({ navigation, template }) {
+export function TracingRound({ navigation, template, mode }) {
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const wide = width > height;
@@ -205,9 +206,10 @@ function TracingRound({ navigation, template }) {
   const transitioned = useRef(false);
   const speak = useSpeech();
   const letter = template.letter;
-  const index = TRACING_LETTERS.indexOf(template);
-  const lesson = ALPHABET.find(item => item.Letter === letter);
-  const word = lesson.ImageName === 'IceCream' ? 'Ice cream' : lesson.ImageName;
+  const items = mode.items;
+  const index = items.indexOf(template);
+  const lesson = mode.lesson(letter);
+  const word = lesson.word;
   const totalLength = template.strokes.reduce(
     (sum, stroke) => sum + stroke.length,
     0,
@@ -221,7 +223,7 @@ function TracingRound({ navigation, template }) {
     Math.round((paintedLength / totalLength) * 100),
   );
   const instruction = trace.complete
-    ? `Wonderful! ${letter} is for ${word}.`
+    ? lesson.doneText
     : trace.offTrack
     ? 'Find the glowing dot to keep going.'
     : trace.drawing
@@ -287,14 +289,14 @@ function TracingRound({ navigation, template }) {
         if (activeRef.current) speak(lesson.pronounce);
       }, 1000);
     }
-    saveTracingStar(letter).catch(() => {
+    mode.save(letter).catch(() => {
       if (mounted) setStarError(true);
     });
     return () => {
       mounted = false;
       clearTimeout(narrationTimer);
     };
-  }, [trace.complete, letter, lesson.pronounce, speak]);
+  }, [trace.complete, letter, lesson.pronounce, speak, mode]);
 
   const nextLetter = useCallback(
     next => {
@@ -303,10 +305,10 @@ function TracingRound({ navigation, template }) {
       clearTimeout(advanceTimer.current);
       advanceTimer.current = null;
       tracingAudio.current?.reset();
-      if (next >= TRACING_LETTERS.length) navigation.goBack();
-      else navigation.setParams({ letter: TRACING_LETTERS[next].letter });
+      if (next >= items.length) navigation.goBack();
+      else navigation.setParams({ [mode.param]: items[next].letter });
     },
-    [navigation],
+    [navigation, items, mode.param],
   );
   useEffect(() => {
     if (!trace.complete) {
@@ -371,12 +373,29 @@ function TracingRound({ navigation, template }) {
         <BackButton navigation={navigation} />
         <View style={styles.heading}>
           <Text numberOfLines={1} adjustsFontSizeToFit style={styles.title}>
-            Letter Tracing
+            {mode.title}
           </Text>
           <Text style={styles.subtitle}>Little strokes, big discoveries</Text>
         </View>
         <View style={styles.letterBadge}>
-          <Text style={styles.letterBadgeText}>{letter}</Text>
+          {React.isValidElement(lesson.badge) ? (
+            lesson.badge
+          ) : lesson.badge ? (
+            <Image
+              source={lesson.badge}
+              resizeMode="contain"
+              accessibilityLabel={letter}
+              style={styles.badgeImage}
+            />
+          ) : (
+            <Text
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              style={styles.letterBadgeText}
+            >
+              {letter}
+            </Text>
+          )}
         </View>
       </View>
       <View
@@ -418,7 +437,7 @@ function TracingRound({ navigation, template }) {
               style={[styles.wordCard, wide && styles.wideWordCard]}
             >
               <Image
-                source={lesson.Image}
+                source={lesson.image}
                 resizeMode="contain"
                 style={wide ? styles.wideWordImage : styles.wordImage}
               />
@@ -432,7 +451,7 @@ function TracingRound({ navigation, template }) {
           <View style={styles.boardHeading}>
             <Text style={styles.strokeLabel}>
               {trace.complete
-                ? '\u2605 Letter star earned!'
+                ? `\u2605 ${mode.noun} star earned!`
                 : `Stroke ${trace.strokeIndex + 1} of ${
                     template.strokes.length
                   }`}
@@ -447,7 +466,7 @@ function TracingRound({ navigation, template }) {
           <View
             accessible
             accessibilityRole="progressbar"
-            accessibilityLabel="Letter progress"
+            accessibilityLabel={`${mode.noun} progress`}
             accessibilityValue={{ min: 0, max: 100, now: percent }}
             style={styles.track}
           >
@@ -472,13 +491,14 @@ function TracingRound({ navigation, template }) {
             <Celebration
               key={letter}
               animate={active && !reducedMotion}
-              nextLetter={TRACING_LETTERS[index + 1]?.letter}
+              nextLetter={items[index + 1]?.letter}
+              finishText={mode.finishText}
               compact={height < 400}
             />
           )}
           {starError && (
             <Text style={styles.saveError}>
-              Letter finished! Your star could not be saved on this phone.
+              {mode.noun} finished! Your star could not be saved on this phone.
             </Text>
           )}
         </View>
@@ -535,8 +555,12 @@ function TracingRound({ navigation, template }) {
           onPress={showGuide}
         />
         <Control
-          label={index === 25 ? 'All letters' : 'Next letter'}
-          symbol={index === 25 ? '\u2605' : '\u203a'}
+          label={
+            index === items.length - 1
+              ? mode.allLabel
+              : `Next ${mode.noun.toLowerCase()}`
+          }
+          symbol={index === items.length - 1 ? '\u2605' : '\u203a'}
           disabled={!trace.complete}
           primary
           onPress={() => nextLetter(index + 1)}
@@ -546,6 +570,27 @@ function TracingRound({ navigation, template }) {
   );
 }
 
+export const LETTER_MODE = {
+  title: 'Letter Tracing',
+  noun: 'Letter',
+  param: 'letter',
+  allLabel: 'All letters',
+  finishText: 'Back to your letters',
+  items: TRACING_LETTERS,
+  save: saveTracingStar,
+  lesson(letter) {
+    const item = ALPHABET.find(entry => entry.Letter === letter);
+    const word = item.ImageName === 'IceCream' ? 'Ice cream' : item.ImageName;
+    return {
+      word,
+      image: item.Image,
+      pronounce: item.pronounce,
+      badge: <FunnyLetter letter={letter} size={40} />,
+      doneText: `Wonderful! ${letter} is for ${word}.`,
+    };
+  },
+};
+
 export default function LetterTracing({ navigation, route }) {
   const template = getTracingLetter(route?.params?.letter);
   return (
@@ -553,6 +598,7 @@ export default function LetterTracing({ navigation, route }) {
       key={template.letter}
       navigation={navigation}
       template={template}
+      mode={LETTER_MODE}
     />
   );
 }
@@ -585,6 +631,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   letterBadgeText: { color: '#8C78D5', fontSize: 28, fontWeight: '900' },
+  badgeImage: { width: 38, height: 38 },
   scene: { flex: 1, minHeight: 0, paddingTop: 8, gap: 8 },
   wide: { flexDirection: 'row' },
   buddyPanel: {

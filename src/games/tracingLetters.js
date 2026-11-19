@@ -1,16 +1,5 @@
-const line = (...points) => points;
-const curve = (a, b, c, d) =>
-  Array.from({ length: 33 }, (_, index) => {
-    const t = index / 32;
-    const u = 1 - t;
-    return [0, 1].map(
-      axis =>
-        u ** 3 * a[axis] +
-        3 * u * u * t * b[axis] +
-        3 * u * t * t * c[axis] +
-        t ** 3 * d[axis],
-    );
-  });
+import { curve, line, makeStroke } from './tracingStrokes';
+
 const oval = () =>
   Array.from({ length: 81 }, (_, index) => {
     const angle = -Math.PI / 2 + (index / 80) * Math.PI * 2;
@@ -117,32 +106,6 @@ const guides = {
   Z: [line([100, 80], [300, 80], [100, 320], [300, 320])],
 };
 
-function makeStroke(raw) {
-  const points = [{ x: raw[0][0], y: raw[0][1], distance: 0 }];
-  for (let index = 1; index < raw.length; index++) {
-    const [x, y] = raw[index];
-    const previous = points[points.length - 1];
-    const length = Math.hypot(x - previous.x, y - previous.y);
-    const steps = Math.ceil(length / 6);
-    for (let step = 1; step <= steps; step++) {
-      points.push({
-        x: previous.x + ((x - previous.x) * step) / steps,
-        y: previous.y + ((y - previous.y) * step) / steps,
-        distance: previous.distance + (length * step) / steps,
-      });
-    }
-  }
-  return {
-    points,
-    length: points[points.length - 1].distance,
-    d: points
-      .map(
-        (point, index) =>
-          `${index ? 'L' : 'M'}${point.x.toFixed(2)} ${point.y.toFixed(2)}`,
-      )
-      .join(' '),
-  };
-}
 
 export const TRACING_LETTERS = Object.entries(guides).map(
   ([letter, strokes]) => ({

@@ -8,7 +8,7 @@ import LetterTracing, {
 } from '../src/screens/LetterTracing';
 import { createTracingAudio } from '../src/games/tracingAudio';
 import TracingLetters from '../src/screens/TracingLetters';
-import { gameData } from '../src/components/Games';
+import { gameData, visibleGames } from '../src/components/Games';
 import {
   beginTrace,
   canvasGeometry,
@@ -363,8 +363,17 @@ describe('tracing screens', () => {
     expect(navigation.setParams).not.toHaveBeenCalled();
   });
 
-  test('has its own home entry and does not change the existing Letters destination', async () => {
+  test('has its own home entry and hides the simple Letters and Numbers games', async () => {
     expect(gameData.find(item => item.id === 'letters').screen).toBe('Letters');
+    expect(visibleGames.map(item => item.id)).not.toEqual(
+      expect.arrayContaining(['letters']),
+    );
+    expect(visibleGames.map(item => item.id)).not.toEqual(
+      expect.arrayContaining(['numbers']),
+    );
+    expect(visibleGames.map(item => item.id)).toEqual(
+      expect.arrayContaining(['tracing', 'number-tracing']),
+    );
     expect(gameData.find(item => item.id === 'tracing').screen).toBe(
       'TracingLetters',
     );

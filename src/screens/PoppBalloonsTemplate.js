@@ -5,6 +5,7 @@ import {
   ResponsiveGrid,
 } from '../components/ActivityLayout';
 import { BALLOON_LETTERS } from '../games/learningData';
+import FunnyLetter from '../components/FunnyLetter';
 export const Number = BALLOON_LETTERS;
 export default function PoppBalloonsTemplate({ navigation }) {
   return (
@@ -22,7 +23,7 @@ export default function PoppBalloonsTemplate({ navigation }) {
           <LearningCard
             width={width}
             height={height}
-            text={item.name}
+            art={<FunnyLetter letter={item.name} />}
             color={item.color}
             label={`Pop letter ${item.name}`}
             onPress={() =>

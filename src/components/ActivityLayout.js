@@ -101,6 +101,7 @@ export function LearningCard({
   label,
   text,
   image,
+  art,
   caption,
   width,
   height = 140,
@@ -132,6 +133,11 @@ export function LearningCard({
       ) : null}
       {image ? (
         <Image source={image} resizeMode="contain" style={styles.art} />
+      ) : null}
+      {art ? (
+        <View pointerEvents="none" style={styles.art}>
+          {art}
+        </View>
       ) : null}
       {caption ? (
         <Text numberOfLines={2} adjustsFontSizeToFit style={styles.caption}>

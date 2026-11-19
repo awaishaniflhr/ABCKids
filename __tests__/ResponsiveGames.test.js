@@ -14,7 +14,9 @@ import NumberKeyboard from '../src/screens/NumberKeyboard';
 import Phone from '../src/screens/Phone';
 import Numeric from '../src/screens/Numeric';
 import MemoryFlipGame from '../src/screens/MemoryFlipGame';
-import AlphabetsShapes from '../src/screens/AlphabetsShapes';
+import AlphabetsShapes, {
+  shuffleTargets,
+} from '../src/screens/AlphabetsShapes';
 import DragLetters from '../src/screens/DragLetters';
 import ColorsTemplate from '../src/screens/ColorsTemplate';
 import Coloring from '../src/screens/Coloring';
@@ -243,6 +245,73 @@ test('animal matching uses the rotated drop target and preserves completed match
       .findAllByType(DragTile)
       .some(node => node.props.label === 'Drag Cat'),
   ).toBe(false);
+});
+
+test('animal matching forgives near-miss drops and hints after wrong tries', async () => {
+  await mount(AlphabetsShapes);
+  const tile = name =>
+    screen.root
+      .findAllByType(DragTile)
+      .find(node => node.props.label === `Drag ${name}`);
+  const box = { width: 100, height: 100 };
+  targetBounds['Match Tiger'] = { x: 300, y: 100, ...box };
+  targetBounds['Match Cat'] = { x: 300, y: 300, ...box };
+  targetBounds['Match Zebra'] = { x: 300, y: 500, ...box };
+  targetBounds['Match Wolf'] = { x: 300, y: 700, ...box };
+  targetBounds['Match Lion'] = { x: 300, y: 900, ...box };
+
+  // A drop just outside the box (within the slack) still counts.
+  let result;
+  await ReactTestRenderer.act(async () => {
+    result = await tile('Tiger').props.onDrop({ x: 290, y: 95 });
+  });
+  expect(result).toBe(true);
+  expect(tile('Tiger')).toBeUndefined();
+
+  // Dropping on the wrong shadow is a miss; two misses make the right one glow.
+  for (let attempt = 0; attempt < 2; attempt++) {
+    await ReactTestRenderer.act(async () => {
+      result = await tile('Cat').props.onDrop({ x: 350, y: 550 });
+    });
+    expect(result).toBe(false);
+  }
+  const catTarget = screen.root.find(
+    node =>
+      node.props.accessibilityLabel === 'Match Cat' &&
+      Array.isArray(node.props.style),
+  );
+  expect(catTarget.props.style.some(style => style?.borderWidth === 4)).toBe(
+    true,
+  );
+
+  for (const [name, y] of [
+    ['Cat', 350],
+    ['Zebra', 550],
+    ['Wolf', 750],
+    ['Lion', 950],
+  ]) {
+    await ReactTestRenderer.act(async () => {
+      await tile(name).props.onDrop({ x: 350, y });
+    });
+  }
+  expect(
+    screen.root.findAllByProps({ testID: 'activity-result' }),
+  ).toHaveLength(0);
+  await ReactTestRenderer.act(async () => jest.advanceTimersByTime(1200));
+  expect(
+    screen.root.findAllByProps({ testID: 'activity-result' }).length,
+  ).toBeGreaterThan(0);
+});
+
+test('animal shadows are shuffled away from the animal order', () => {
+  const ids = [1, 2, 3, 4, 5];
+  for (let seed = 0; seed < 50; seed++) {
+    let value = seed / 50;
+    const random = () => (value = (value * 9301 + 0.49297) % 1);
+    const order = shuffleTargets(ids, random);
+    expect([...order].sort()).toEqual(ids);
+    expect(order.some((id, index) => id === ids[index])).toBe(false);
+  }
 });
 
 test('coloring keeps filled parts when rotating the canvas and palette', async () => {

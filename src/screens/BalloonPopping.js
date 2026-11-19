@@ -24,6 +24,7 @@ import { useIsFocused } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Tts from 'react-native-tts';
 import BackButton from '../components/BackButton';
+import FunnyLetter from '../components/FunnyLetter';
 import SoundPlayer from '../utills/SoundPlayer';
 import {
   createRound,
@@ -294,18 +295,13 @@ const Balloon = memo(function Balloon({
           {!item.isBomb && (
             <>
               <View pointerEvents="none" style={styles.string} />
-              <Text
+              <View
                 pointerEvents="none"
-                style={[
-                  styles.letter,
-                  item.color === 1 && styles.darkLetter,
-                  {
-                    fontSize: item.size * 0.46,
-                  },
-                ]}
+                accessibilityLabel={item.letter}
+                style={styles.letterArt}
               >
-                {item.letter}
-              </Text>
+                <FunnyLetter letter={item.letter} size={item.size * 0.58} />
+              </View>
             </>
           )}
         </View>
@@ -904,19 +900,9 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
-  letter: {
-    color: 'white',
-    fontWeight: '900',
-    textShadowColor: '#176c9b',
-    textShadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    textShadowRadius: 2,
-  },
-  darkLetter: {
-    color: '#22486b',
-    textShadowColor: 'white',
+  letterArt: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   overlay: {
     ...StyleSheet.absoluteFill,

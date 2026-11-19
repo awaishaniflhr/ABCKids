@@ -8,6 +8,7 @@ import {
 } from '../components/ActivityLayout';
 import { TRACING_LETTERS } from '../games/tracingLetters';
 import { readTracingStars } from '../games/tracingProgress';
+import FunnyLetter from '../components/FunnyLetter';
 
 export default function TracingLetters({ navigation }) {
   const [stars, setStars] = useState([]);
@@ -44,7 +45,7 @@ export default function TracingLetters({ navigation }) {
           <LearningCard
             width={width}
             height={height}
-            text={item.letter}
+            art={<FunnyLetter letter={item.letter} />}
             label={`Trace letter ${item.letter}`}
             caption={
               stars.includes(item.letter)
