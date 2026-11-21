@@ -88,7 +88,7 @@ const FLOWERS = [
   [0.94, 0.9, '#FFFFFF'],
 ];
 
-function useReducedMotion() {
+export function useReducedMotion() {
   const [reduced, setReduced] = useState(false);
   useEffect(() => {
     let mounted = true;
@@ -135,7 +135,7 @@ function useLoop(duration, delay, animate) {
   return value;
 }
 
-function Sun({ size, animate }) {
+export function Sun({ size, animate }) {
   const spin = useLoop(24000, 0, animate);
   const c = size / 2;
   return (

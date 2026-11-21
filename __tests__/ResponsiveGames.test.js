@@ -13,7 +13,7 @@ import VehicleSound from '../src/screens/VehicleSound';
 import InstrumentSound from '../src/screens/InstrumentSound';
 import LetterSound from '../src/screens/LetterSound';
 import NumberKeyboard from '../src/screens/NumberKeyboard';
-import Phone from '../src/screens/Phone';
+import Phone, { RING_MS, TALK_MS } from '../src/screens/Phone';
 import Numeric from '../src/screens/Numeric';
 import MemoryFlipGame from '../src/screens/MemoryFlipGame';
 import AlphabetShapes, { shuffleTargets } from '../src/screens/AlphabetShapes';
@@ -333,10 +333,12 @@ test('coloring keeps filled parts when rotating the canvas and palette', async (
 test('a phone call continues through rotation', async () => {
   await mount(Phone);
   await press('Call Cat');
-  await press('Start call');
   await rotate();
   expect(text()).toContain('Cat');
   expect(text()).toContain('Calling…');
-  ReactTestRenderer.act(() => jest.advanceTimersByTime(3000));
+  ReactTestRenderer.act(() => jest.advanceTimersByTime(RING_MS));
   expect(text()).toContain('00:00');
+  expect(text()).toContain('Meow!');
+  ReactTestRenderer.act(() => jest.advanceTimersByTime(TALK_MS));
+  expect(text()).toContain('Tap again to call!');
 });

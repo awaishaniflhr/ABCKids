@@ -2,7 +2,7 @@ import React from 'react';
 import { ImageBackground, StatusBar, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import HeaderNew from '../components/HeaderNew';
-import Games, { gameData } from '../components/Games';
+import Games, { visibleGames } from '../components/Games';
 export default function Home({ navigation }) {
   const insets = useSafeAreaInsets();
   return (
@@ -24,7 +24,7 @@ export default function Home({ navigation }) {
           },
         ]}
       >
-        <HeaderNew activityCount={gameData.length} />
+        <HeaderNew activityCount={visibleGames.length} />
         <Games navigation={navigation} />
       </View>
     </ImageBackground>

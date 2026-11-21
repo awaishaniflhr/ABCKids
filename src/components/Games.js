@@ -1,10 +1,9 @@
-import React, { memo, useCallback, useRef, useState } from 'react';
+import React, { memo, useCallback, useEffect, useRef, useState } from 'react';
 import {
   Animated,
+  Easing,
   FlatList,
   Image,
-  ImageBackground,
-  Pressable,
   StyleSheet,
   Text,
   View,
@@ -12,6 +11,8 @@ import {
 import SoundPlayer from '../utills/SoundPlayer';
 import TracingIcon from './TracingIcon';
 import MatchingIcon from './MatchingIcon';
+import PictureCard, { pictureCardHeight } from './PictureCard';
+import { useReducedMotion } from './SingAlongBackdrop';
 
 export const gameData = [
   {
@@ -27,6 +28,7 @@ export const gameData = [
     id: 'tracing',
     name: 'Letter Tracing',
     icon: 'tracing',
+    cover: require('../assets/game_lettertracing.jpg'),
     screen: 'TracingLetters',
     color: '#8d83d7',
     shadow: '#685cae',
@@ -35,6 +37,7 @@ export const gameData = [
     id: 'number-tracing',
     name: 'Number Tracing',
     icon: 'number-tracing',
+    cover: require('../assets/game_numbertracing.jpg'),
     screen: 'TracingNumbers',
     color: '#f2b13d',
     shadow: '#c98a1c',
@@ -43,6 +46,7 @@ export const gameData = [
     id: 'dot-tracing',
     name: 'Dot Tracing',
     icon: 'dot-tracing',
+    cover: require('../assets/game_dottracing.jpg'),
     screen: 'DotTracing',
     color: '#2aa86f',
     shadow: '#1b7f52',
@@ -51,6 +55,7 @@ export const gameData = [
     id: 'balloons',
     name: 'Balloons',
     Image: require('../assets/balloongame.png'),
+    cover: require('../assets/game_balloons.jpg'),
     screen: 'PopBalloons',
     color: '#9259d6',
     shadow: '#6c3aac',
@@ -76,6 +81,7 @@ export const gameData = [
     id: 'addition',
     name: 'Addition',
     Image: require('../assets/addition.png'),
+    cover: require('../assets/game_addition.jpg'),
     screen: 'Numeric',
     color: '#dd6d91',
     shadow: '#b7476b',
@@ -84,6 +90,7 @@ export const gameData = [
     id: 'coloring',
     name: 'Coloring',
     Image: require('../assets/coloring.png'),
+    cover: require('../assets/game_coloring.jpg'),
     screen: 'ColorsTemplate',
     color: '#1ca8b9',
     shadow: '#0b7b8a',
@@ -92,6 +99,7 @@ export const gameData = [
     id: 'memory',
     name: 'Memory',
     Image: require('../assets/flipcard.png'),
+    cover: require('../assets/game_memory.jpg'),
     screen: 'MemoryFlipGame',
     color: '#e97665',
     shadow: '#bf5141',
@@ -100,6 +108,7 @@ export const gameData = [
     id: 'word-tracing',
     name: 'Word Tracing',
     icon: 'word-tracing',
+    cover: require('../assets/game_wordtracing.jpg'),
     screen: 'WordTracing',
     color: '#3f5fd0',
     shadow: '#28409f',
@@ -117,6 +126,7 @@ export const gameData = [
     id: 'sounds',
     name: 'Sounds',
     Image: require('../assets/cat.png'),
+    cover: require('../assets/game_sounds.jpg'),
     screen: 'Sounds',
     color: '#68a546',
     shadow: '#47812a',
@@ -125,6 +135,7 @@ export const gameData = [
     id: 'phone',
     name: 'Animal Phone',
     Image: require('../assets/call.png'),
+    cover: require('../assets/game_phone.jpg'),
     screen: 'Phone',
     color: '#a36acb',
     shadow: '#7c47a3',
@@ -133,6 +144,7 @@ export const gameData = [
     id: 'poems',
     name: 'Poems',
     Image: require('../assets/twinkle.png'),
+    cover: require('../assets/game_poems.jpg'),
     screen: 'Poems',
     color: '#d68b35',
     shadow: '#ad6a1d',
@@ -150,70 +162,101 @@ const TRACING_ICONS = {
 };
 
 const GAP = 12;
+const MIN_CARD_WIDTH = 130;
 
-const GameCard = memo(function GameCard({ item, width, height, onSelect }) {
-  const scale = useRef(new Animated.Value(1)).current;
-  function animate(toValue) {
-    Animated.spring(scale, {
-      toValue,
-      speed: 30,
-      bounciness: 3,
-      useNativeDriver: true,
-    }).start();
+// Games with a `cover` show that picture; the rest show their icon.
+function GameArt({ item, size }) {
+  if (item.icon === 'matching') return <MatchingIcon size={size} />;
+  if (item.icon in TRACING_ICONS) {
+    return <TracingIcon size={size} variant={TRACING_ICONS[item.icon]} />;
   }
-  const imageSize = Math.min(82, height * 0.57);
-
   return (
-    <Animated.View
-      style={[styles.cardShadow, { width, height, transform: [{ scale }] }]}
+    <Image
+      source={item.Image}
+      resizeMode="contain"
+      style={{ width: size, height: size }}
+    />
+  );
+}
+
+const TITLE_COLOR = '#2B2F77';
+const POP_MS = 3200; // one gentle pop every few seconds
+
+// Room under the picture for the one-line title.
+export const titleRoom = width => Math.max(42, width * 0.25);
+
+// Font size of every Home card title. Change this number to resize them all.
+// A name too long for its card shrinks a little so it never gets cut off.
+const TITLE_FONT_SIZE = 18;
+
+// The title grows a little and springs back now and then, like a heartbeat.
+function PopTitle({ text, delay }) {
+  const reduced = useReducedMotion();
+  const pop = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    if (reduced) return undefined;
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pop, {
+          toValue: 1,
+          duration: 220,
+          easing: Easing.out(Easing.quad),
+          useNativeDriver: true,
+        }),
+        Animated.spring(pop, {
+          toValue: 0,
+          friction: 3,
+          tension: 120,
+          useNativeDriver: true,
+        }),
+        Animated.delay(POP_MS),
+      ]),
+    );
+    const start = setTimeout(() => loop.start(), delay);
+    return () => {
+      clearTimeout(start);
+      loop.stop();
+    };
+  }, [reduced, pop, delay]);
+  const scale = pop.interpolate({
+    inputRange: [-1, 0, 1],
+    outputRange: [0.9, 1, 1.14],
+  });
+  return (
+    <Animated.Text
+      numberOfLines={1}
+      adjustsFontSizeToFit
+      minimumFontScale={0.7}
+      style={[
+        styles.title,
+        { fontSize: TITLE_FONT_SIZE, transform: [{ scale }] },
+      ]}
     >
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={`Play ${item.name}`}
-        onPress={() => onSelect(item)}
-        onPressIn={() => animate(0.95)}
-        onPressOut={() => animate(1)}
-        style={[styles.card, { backgroundColor: item.shadow }]}
-      >
-        <View style={[styles.cardFace, { backgroundColor: item.color }]}>
-          <ImageBackground
-            pointerEvents="none"
-            source={require('../assets/shine2.png')}
-            imageStyle={styles.rays}
-            style={styles.artwork}
-          >
-            <View pointerEvents="none" style={styles.highlight} />
-            {item.icon === 'matching' ? (
-              <MatchingIcon size={imageSize} />
-            ) : item.icon in TRACING_ICONS ? (
-              <TracingIcon
-                size={imageSize}
-                variant={TRACING_ICONS[item.icon]}
-              />
-            ) : (
-              <Image
-                source={item.Image}
-                resizeMode="contain"
-                style={{ width: imageSize, height: imageSize }}
-              />
-            )}
-          </ImageBackground>
-          <View style={styles.caption}>
-            <Text
-              numberOfLines={1}
-              adjustsFontSizeToFit
-              minimumFontScale={0.75}
-              style={styles.label}
-            >
-              {item.name}
-            </Text>
-            <View style={styles.playIcon}>
-              <Text style={styles.playArrow}>{'\u25b6'}</Text>
-            </View>
-          </View>
-        </View>
-      </Pressable>
-    </Animated.View>
+      {text}
+    </Animated.Text>
+  );
+}
+
+const GameCard = memo(function GameCard({
+  item,
+  index,
+  width,
+  height,
+  onSelect,
+}) {
+  return (
+    <PictureCard
+      title={item.name}
+      cover={item.cover}
+      color={item.color}
+      width={width}
+      height={height}
+      accessibilityLabel={`Play ${item.name}`}
+      onPress={() => onSelect(item)}
+      renderTitle={() => <PopTitle text={item.name} delay={index * 260} />}
+    >
+      <GameArt item={item} size={(width - 16) * 0.55} />
+    </PictureCard>
   );
 });
 
@@ -236,13 +279,10 @@ export default function Games({ navigation }) {
   const gridWidth = Math.max(0, layout.width - 8);
   const columns = Math.max(
     2,
-    Math.min(6, Math.floor((gridWidth + GAP) / (124 + GAP))),
+    Math.min(6, Math.floor((gridWidth + GAP) / (MIN_CARD_WIDTH + GAP))),
   );
   const cardWidth = (gridWidth - (columns - 1) * GAP) / columns;
-  const cardHeight = Math.min(
-    148,
-    Math.max(106, (layout.height - GAP - 12) / 2),
-  );
+  const cardHeight = pictureCardHeight(cardWidth, titleRoom(cardWidth));
 
   return (
     <View style={styles.container}>
@@ -257,9 +297,10 @@ export default function Games({ navigation }) {
             data={visibleGames}
             numColumns={columns}
             keyExtractor={item => item.id}
-            renderItem={({ item }) => (
+            renderItem={({ item, index }) => (
               <GameCard
                 item={item}
+                index={index}
                 width={cardWidth}
                 height={cardHeight}
                 onSelect={onSelect}
@@ -301,65 +342,12 @@ const styles = StyleSheet.create({
     includeFontPadding: false,
   },
   grid: { flex: 1 },
-  list: { paddingHorizontal: 4, paddingTop: 2, paddingBottom: 16 },
+  title: {
+    color: TITLE_COLOR,
+    fontFamily: 'Poppins-ExtraBold',
+    textAlign: 'center',
+    includeFontPadding: false,
+  },
+  list: { paddingHorizontal: 4, paddingTop: 4, paddingBottom: 20 },
   row: { gap: GAP, marginBottom: GAP },
-  cardShadow: {
-    shadowColor: '#285e7c',
-    shadowOpacity: 0.14,
-    shadowRadius: 5,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 3,
-    backgroundColor: 'white',
-    borderRadius: 22,
-  },
-  card: {
-    flex: 1,
-    borderRadius: 22,
-    padding: 3,
-    paddingBottom: 7,
-    borderWidth: 3,
-    borderColor: '#ffffff',
-    overflow: 'hidden',
-  },
-  cardFace: { flex: 1, borderRadius: 15, overflow: 'hidden' },
-  artwork: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  rays: { opacity: 0.16 },
-  highlight: {
-    position: 'absolute',
-    width: '130%',
-    height: '80%',
-    top: '-45%',
-    backgroundColor: '#ffffff1c',
-    borderRadius: 100,
-  },
-  caption: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 4,
-    paddingVertical: 6,
-    paddingHorizontal: 9,
-    backgroundColor: '#00000012',
-  },
-  label: {
-    flex: 1,
-    fontFamily: 'Poppins-SemiBold',
-    fontSize: 13,
-    color: '#ffffff',
-    includeFontPadding: false,
-  },
-  playIcon: {
-    width: 17,
-    height: 17,
-    borderRadius: 9,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#ffffff33',
-  },
-  playArrow: {
-    fontSize: 8,
-    color: '#ffffff',
-    marginLeft: 1,
-    includeFontPadding: false,
-  },
 });

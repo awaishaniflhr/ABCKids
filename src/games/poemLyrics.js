@@ -1,6 +1,9 @@
+import { POEM_TIMINGS } from './poemTimings';
+
 // Sing-along lyrics with the time (in seconds) each line starts in the app's
-// recordings. Times were measured from the recordings with speech
-// recognition, then rounded. To fine-tune a song, nudge a verse's start time.
+// recordings, measured with speech recognition. These line times are only a
+// guide: scripts/align-lyrics.py turns them into exact per-word times
+// (poemTimings.js), which the player uses when available.
 
 // Builds timed lines for one verse: `start` is when the verse begins and each
 // line is [secondsAfterStart, text].
@@ -195,6 +198,20 @@ export const POEM_LYRICS = {
   ],
 };
 
+// The lyrics for a song, with exact word times merged in when available:
+// each line becomes { at, text, words: [startOfEachWord] }.
+export function lyricsFor(id) {
+  const lines = POEM_LYRICS[id] || [];
+  const timings = POEM_TIMINGS[id];
+  if (!timings || timings.length !== lines.length) return lines;
+  return lines.map((line, index) => {
+    const words = timings[index];
+    return words?.length === line.text.split(' ').length
+      ? { ...line, at: words[0], words }
+      : line;
+  });
+}
+
 // Index of the line being sung at `time`, or -1 before the singing starts.
 export function activeLine(lines, time) {
   let found = -1;
@@ -205,12 +222,19 @@ export function activeLine(lines, time) {
   return found;
 }
 
-// Index of the word being sung in that line. Words are spread across the
-// line's time (most of the gap until the next line), so the highlight walks
-// along the line in step with the singer.
+// Index of the word being sung in that line. With exact word times this is
+// the last word that has started; otherwise words are spread across most of
+// the gap until the next line.
 export function activeWord(lines, lineIndex, time, duration = 0) {
   if (lineIndex < 0 || lineIndex >= lines.length) return -1;
   const line = lines[lineIndex];
+  if (line.words) {
+    let found = 0;
+    line.words.forEach((start, index) => {
+      if (start <= time) found = index;
+    });
+    return found;
+  }
   const words = line.text.split(' ').length;
   const nextAt =
     lines[lineIndex + 1]?.at ?? Math.min(duration || line.at + 4, line.at + 4);

@@ -902,62 +902,29 @@ export const INSTRUMENTS = [
   },
 ];
 
+// The Animal Phone keys, in keypad order, with each key's pastel colour.
+// Pictures, sounds and words come from ANIMALS.
 export const PHONE_ANIMALS = [
-  {
-    id: 1,
-    name: 'Horse',
-    image: require('../assets/horse.png'),
-    sound: 'horsesound',
-  },
-  {
-    id: 2,
-    name: 'Cat',
-    image: require('../assets/cat.png'),
-    sound: 'catsound',
-  },
-  {
-    id: 3,
-    name: 'Lion',
-    image: require('../assets/lion.png'),
-    sound: 'lionsound',
-  },
-  {
-    id: 4,
-    name: 'Tiger',
-    image: require('../assets/tiger.png'),
-    sound: 'tigersound',
-  },
-  {
-    id: 5,
-    name: 'Goat',
-    image: require('../assets/goat.png'),
-    sound: 'goatsound',
-  },
-  {
-    id: 6,
-    name: 'Cock',
-    image: require('../assets/cock.png'),
-    sound: 'cocksound',
-  },
-  {
-    id: 7,
-    name: 'Wolf',
-    image: require('../assets/wolf.png'),
-    sound: 'wolfsound',
-  },
-  {
-    id: 8,
-    name: 'Monkey',
-    image: require('../assets/monkey.png'),
-    sound: 'monkeysound',
-  },
-  {
-    id: 9,
-    name: 'Cow',
-    image: require('../assets/yak.png'),
-    sound: 'cowsound',
-  },
-];
+  ['Cow', '#B7C8F2'],
+  ['Duck', '#FBE07A'],
+  ['Dog', '#EBCFA9'],
+  ['Cat', '#F7C6D6'],
+  ['Sheep', '#FBF5EA'],
+  ['Horse', '#DDAE7E'],
+  ['Lion', '#FAD06A'],
+  ['Elephant', '#BCD0F2'],
+  ['Monkey', '#B98A68'],
+].map(([name, key], index) => {
+  const animal = ANIMALS.find(item => item.name === name);
+  return {
+    id: index + 1,
+    name,
+    image: animal.Image,
+    sound: animal.sound,
+    says: animal.says,
+    key,
+  };
+});
 
 export const COUNTING = [
   {

@@ -6,8 +6,10 @@ import {
   activeLine,
   activeWord,
   formatTime,
+  lyricsFor,
   POEM_LYRICS,
 } from '../src/games/poemLyrics';
+import { POEM_TIMINGS } from '../src/games/poemTimings';
 import Poems, { songs } from '../src/screens/Poems';
 import { TICK_MS } from '../src/components/PoemPlayer';
 
@@ -68,6 +70,28 @@ describe('lyric timing', () => {
     expect(activeWord(lines, -1, 1)).toBe(-1);
   });
 
+  it('follows exact word times when the song has them', () => {
+    const timed = [{ at: 2, text: 'never never do', words: [2, 2.3, 2.9] }];
+    expect(activeWord(timed, 0, 2.1)).toBe(0);
+    expect(activeWord(timed, 0, 2.4)).toBe(1);
+    expect(activeWord(timed, 0, 3.5)).toBe(2);
+  });
+
+  it('keeps generated word timings in step with the lyrics', () => {
+    Object.entries(POEM_TIMINGS).forEach(([id, lines]) => {
+      expect(lines).toHaveLength(POEM_LYRICS[id].length);
+      lines.forEach((times, index) => {
+        expect(times).toHaveLength(
+          POEM_LYRICS[id][index].text.split(' ').length,
+        );
+      });
+      const merged = lyricsFor(id).flatMap(line => line.words);
+      merged.forEach((time, index) => {
+        if (index) expect(time).toBeGreaterThan(merged[index - 1]);
+      });
+    });
+  });
+
   it('formats times as m:ss', () => {
     expect(formatTime(0)).toBe('0:00');
     expect(formatTime(65.4)).toBe('1:05');
@@ -126,6 +150,16 @@ describe('poem player', () => {
         </SafeAreaProvider>,
       );
     });
+    // The card grid sizes itself from its measured width.
+    ReactTestRenderer.act(() =>
+      screen.root
+        .findAll(node => typeof node.props.onLayout === 'function')
+        .forEach(node =>
+          node.props.onLayout({
+            nativeEvent: { layout: { width: 400, height: 800 } },
+          }),
+        ),
+    );
     press(`Sing ${title}`);
     advance(0); // the song loads
   }

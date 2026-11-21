@@ -89,8 +89,9 @@ describe('animal sounds', () => {
       false,
     );
     const phone = name => PHONE_ANIMALS.find(item => item.name === name).sound;
-    expect(phone('Wolf')).toBe('wolfsound');
+    expect(phone('Cow')).toBe('cowsound');
     expect(phone('Horse')).toBe('horsesound');
+    expect(PHONE_ANIMALS).toHaveLength(9);
   });
 
   it('plays the sound and shows what the animal says when tapped', () => {

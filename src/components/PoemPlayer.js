@@ -18,7 +18,10 @@ import Sound from 'react-native-sound';
 import SingAlongBackdrop from './SingAlongBackdrop';
 import { activeLine, activeWord, formatTime } from '../games/poemLyrics';
 
-export const TICK_MS = 120;
+export const TICK_MS = 100;
+// Light each word up a moment early, so the highlight lands as the word is
+// sung rather than just after (polling and drawing take a little time).
+export const LEAD_SECONDS = 0.15;
 
 function useReducedMotion() {
   const [reduced, setReduced] = useState(false);
@@ -300,8 +303,9 @@ export default function PoemPlayer({
     onEnded: hasNext ? next : undefined,
   });
   const lines = song?.lyrics || [];
-  const lineIndex = activeLine(lines, audio.time);
-  const wordIndex = activeWord(lines, lineIndex, audio.time, audio.duration);
+  const singTime = audio.time + LEAD_SECONDS;
+  const lineIndex = activeLine(lines, singTime);
+  const wordIndex = activeWord(lines, lineIndex, singTime, audio.duration);
 
   // Keep the line being sung in the middle of the lyrics area.
   const scroll = useRef(null);
@@ -349,7 +353,11 @@ export default function PoemPlayer({
         <SingAlongBackdrop sun={false} />
         <View style={styles.header}>
           <View style={[styles.artBubble, { borderColor: color }]}>
-            <Image source={song.img} style={styles.art} resizeMode="contain" />
+            <Image
+              source={song.cover || song.img}
+              style={song.cover ? styles.cover : styles.art}
+              resizeMode={song.cover ? 'cover' : 'contain'}
+            />
           </View>
           <View style={styles.titleBox}>
             <Text numberOfLines={2} style={styles.title}>
@@ -379,7 +387,7 @@ export default function PoemPlayer({
               ref={scroll}
               contentContainerStyle={[
                 styles.lyrics,
-                { paddingVertical: area * 0.3 },
+                { paddingBottom: area * 0.6 },
               ]}
               showsVerticalScrollIndicator={false}
             >
@@ -486,8 +494,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFFEE',
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
   },
   art: { width: 46, height: 46 },
+  cover: { width: '100%', height: '100%' },
   titleBox: {
     flex: 1,
     backgroundColor: '#FFFFFFD9',
@@ -528,7 +538,12 @@ const styles = StyleSheet.create({
     borderColor: '#FFFFFF',
     overflow: 'hidden',
   },
-  lyrics: { paddingHorizontal: 14, alignItems: 'center', gap: 10 },
+  lyrics: {
+    paddingHorizontal: 14,
+    paddingTop: 18,
+    alignItems: 'center',
+    gap: 10,
+  },
   line: {
     fontFamily: 'Poppins-SemiBold',
     fontSize: 18,
