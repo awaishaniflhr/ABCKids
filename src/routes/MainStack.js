@@ -3,7 +3,7 @@ import {StatusBar} from 'react-native';
 import React from 'react';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import Home from '../screens/Home';
-import AlphabetsShapes from '../screens/AlphabetsShapes';
+import AlphabetShapes from '../screens/AlphabetShapes';
 import Coloring from '../screens/Coloring';
 import ColorsTemplate from '../screens/ColorsTemplate';
 import Loader from '../screens/Loader';
@@ -13,10 +13,12 @@ import TracingLetters from '../screens/TracingLetters';
 import LetterTracing from '../screens/LetterTracing';
 import TracingNumbers from '../screens/TracingNumbers';
 import NumberTracing from '../screens/NumberTracing';
+import WordTracing from '../screens/WordTracing';
+import DotTracing from '../screens/DotTracing';
 import BalloonPopping from '../screens/BalloonPopping';
 import Numbers from '../screens/Numbers';
 import Numeric from '../screens/Numeric';
-import PoppBalloonsTemplate from '../screens/PoppBalloonsTemplate';
+import PopBalloons from '../screens/PopBalloons';
 import MemoryFlipGame from '../screens/MemoryFlipGame';
 import FunctionScreen from '../screens/FruitName';
 import FruitName from '../screens/FruitName';
@@ -26,6 +28,8 @@ import SoundScreen from '../screens/SoundScreen';
 import LetterSound from '../screens/LetterSound';
 import Phone from '../screens/Phone';
 import BirdSound from '../screens/BirdSound';
+import VehicleSound from '../screens/VehicleSound';
+import InstrumentSound from '../screens/InstrumentSound';
 import Poem from '../screens/Poems';
 import Poems from '../screens/Poems';
 const Stack = createNativeStackNavigator();
@@ -46,8 +50,8 @@ const MainStack = () => {
           options={{headerShown: false}}
         />
         <Stack.Screen
-          name="AlphabetsShapes"
-          component={AlphabetsShapes}
+          name="AlphabetShapes"
+          component={AlphabetShapes}
           options={{headerShown: false}}
         />
         <Stack.Screen
@@ -96,6 +100,16 @@ const MainStack = () => {
           options={{headerShown: false}}
         />
         <Stack.Screen
+          name="DotTracing"
+          component={DotTracing}
+          options={{headerShown: false}}
+        />
+        <Stack.Screen
+          name="WordTracing"
+          component={WordTracing}
+          options={{headerShown: false}}
+        />
+        <Stack.Screen
           name="BalloonPopping"
           component={BalloonPopping}
           options={{headerShown: false}}
@@ -112,8 +126,8 @@ const MainStack = () => {
         />
 
         <Stack.Screen
-          name="PoppBalloonsTemplate"
-          component={PoppBalloonsTemplate}
+          name="PopBalloons"
+          component={PopBalloons}
           options={{headerShown: false}}
         />
         <Stack.Screen
@@ -144,6 +158,16 @@ const MainStack = () => {
         <Stack.Screen
           name="LetterSound"
           component={LetterSound}
+          options={{headerShown: false}}
+        />
+        <Stack.Screen
+          name="VehicleSound"
+          component={VehicleSound}
+          options={{headerShown: false}}
+        />
+        <Stack.Screen
+          name="InstrumentSound"
+          component={InstrumentSound}
           options={{headerShown: false}}
         />
         <Stack.Screen

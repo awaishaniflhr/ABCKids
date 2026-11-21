@@ -242,7 +242,7 @@ const BalloonPopping = ({
           position: 'absolute',
           top: 180
         }}>
-              Minimum 10 Balloons Popped
+              Pop at least 10 balloons
             </Text>
             <View style={{
           alignItems: 'center',

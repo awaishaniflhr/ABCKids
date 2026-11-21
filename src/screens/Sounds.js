@@ -4,6 +4,8 @@ import {
   LearningCard,
   ResponsiveGrid,
 } from '../components/ActivityLayout';
+// The Letters board (LetterSound) keeps its screen and route but is no longer
+// listed here.
 export const SoundCards = [
   {
     id: 1,
@@ -13,15 +15,21 @@ export const SoundCards = [
   },
   {
     id: 2,
-    name: 'Letters',
-    Image: require('../assets/abc2.png'),
-    screen: 'LetterSound',
-  },
-  {
-    id: 3,
     name: 'Birds',
     Image: require('../assets/birds.png'),
     screen: 'BirdSound',
+  },
+  {
+    id: 3,
+    name: 'Vehicles',
+    Image: require('../assets/redcar.png'),
+    screen: 'VehicleSound',
+  },
+  {
+    id: 4,
+    name: 'Music',
+    Image: require('../assets/drumkit.png'),
+    screen: 'InstrumentSound',
   },
 ];
 export default function Sounds({ navigation }) {

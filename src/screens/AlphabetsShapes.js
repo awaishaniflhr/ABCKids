@@ -191,7 +191,7 @@ function ShadowTarget({
   );
 }
 
-export default function AlphabetsShapes({ navigation }) {
+export default function AlphabetShapes({ navigation }) {
   const { width, height, wide, contentWidth, contentHeight } =
     useActivityLayout();
   const speak = useSpeech();

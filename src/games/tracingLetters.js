@@ -179,7 +179,13 @@ function project(stroke, point, progress, tolerance) {
   return best;
 }
 
-export function moveTrace(state, point, strokes, tolerance = 28) {
+export function moveTrace(
+  state,
+  point,
+  strokes,
+  tolerance = 28,
+  endRadius = 18,
+) {
   if (state.complete) return state;
   if (!state.drawing) return beginTrace(state, point, strokes, tolerance);
   const stroke = strokes[state.strokeIndex];
@@ -201,7 +207,7 @@ export function moveTrace(state, point, strokes, tolerance = 28) {
     const end = stroke.points[stroke.points.length - 1];
     if (
       progress >= stroke.length - 8 &&
-      Math.hypot(sample.x - end.x, sample.y - end.y) <= 18
+      Math.hypot(sample.x - end.x, sample.y - end.y) <= endRadius
     ) {
       const strokeIndex = state.strokeIndex + 1;
       return {
@@ -214,15 +220,22 @@ export function moveTrace(state, point, strokes, tolerance = 28) {
   return { ...state, progress, lastPoint: point, offTrack: false };
 }
 
-export function canvasGeometry(width, height) {
-  const scale = Math.max(0.001, Math.min(width, height) / 400);
+export const DEFAULT_BOX = { x: 0, y: 0, width: 400, height: 400 };
+
+// Fits a drawing box (400 x 400 for single letters, wider for words) into the
+// canvas, centred, and returns where the box's origin lands on screen.
+export function canvasGeometry(width, height, box = DEFAULT_BOX) {
+  const scale = Math.max(
+    0.001,
+    Math.min(width / box.width, height / box.height),
+  );
   return {
     scale,
-    left: (width - scale * 400) / 2,
-    top: (height - scale * 400) / 2,
+    left: (width - scale * box.width) / 2 - box.x * scale,
+    top: (height - scale * box.height) / 2 - box.y * scale,
   };
 }
-export function canvasPoint(point, width, height) {
-  const { scale, left, top } = canvasGeometry(width, height);
+export function canvasPoint(point, width, height, box = DEFAULT_BOX) {
+  const { scale, left, top } = canvasGeometry(width, height, box);
   return { x: (point.x - left) / scale, y: (point.y - top) / scale };
 }

@@ -12,6 +12,13 @@ jest.mock('react-native-animatable', () => {
   return { View, Text, Image };
 });
 jest.mock('lottie-react-native', () => () => null);
+jest.mock('react-native-tts', () => ({
+  getInitStatus: jest.fn(() => Promise.resolve()),
+  setDefaultLanguage: jest.fn(() => Promise.resolve()),
+  setDefaultRate: jest.fn(() => Promise.resolve()),
+  stop: jest.fn(() => Promise.resolve()),
+  speak: jest.fn(),
+}));
 jest.mock('react-native-orientation-locker', () => ({
   lockToPortrait: jest.fn(),
 }));

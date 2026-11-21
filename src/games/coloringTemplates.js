@@ -673,7 +673,7 @@ export const COLORING_TEMPLATES = [
 ];
 
 export function getColoringTemplate(id) {
-  // Accept links from the previous picker (including its ButterFly spelling).
+  // Keep compatibility with previously saved butterfly template IDs.
   return (
     COLORING_TEMPLATES.find(item => item.id === String(id).toLowerCase()) ||
     COLORING_TEMPLATES[0]

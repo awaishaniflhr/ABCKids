@@ -40,10 +40,18 @@ export const gameData = [
     shadow: '#c98a1c',
   },
   {
+    id: 'dot-tracing',
+    name: 'Dot Tracing',
+    icon: 'dot-tracing',
+    screen: 'DotTracing',
+    color: '#2aa86f',
+    shadow: '#1b7f52',
+  },
+  {
     id: 'balloons',
     name: 'Balloons',
     Image: require('../assets/balloongame.png'),
-    screen: 'PoppBalloonsTemplate',
+    screen: 'PopBalloons',
     color: '#9259d6',
     shadow: '#6c3aac',
   },
@@ -60,14 +68,14 @@ export const gameData = [
     id: 'matching',
     name: 'Matching',
     icon: 'matching',
-    screen: 'AlphabetsShapes',
+    screen: 'AlphabetShapes',
     color: '#30a58d',
     shadow: '#1e7f6b',
   },
   {
     id: 'addition',
     name: 'Addition',
-    Image: require('../assets/plus.png'),
+    Image: require('../assets/addition.png'),
     screen: 'Numeric',
     color: '#dd6d91',
     shadow: '#b7476b',
@@ -89,10 +97,19 @@ export const gameData = [
     shadow: '#bf5141',
   },
   {
+    id: 'word-tracing',
+    name: 'Word Tracing',
+    icon: 'word-tracing',
+    screen: 'WordTracing',
+    color: '#3f5fd0',
+    shadow: '#28409f',
+  },
+  {
     id: 'counting',
     name: 'Counting',
     Image: require('../assets/numberkeyboard.png'),
     screen: 'NumberKeyboard',
+    hidden: true,
     color: '#627fca',
     shadow: '#415ba3',
   },
@@ -124,6 +141,13 @@ export const gameData = [
 
 // Games marked `hidden` keep their screens and routes but are not shown on Home.
 export const visibleGames = gameData.filter(item => !item.hidden);
+
+const TRACING_ICONS = {
+  tracing: 'letter',
+  'number-tracing': 'number',
+  'word-tracing': 'word',
+  'dot-tracing': 'dots',
+};
 
 const GAP = 12;
 
@@ -161,10 +185,10 @@ const GameCard = memo(function GameCard({ item, width, height, onSelect }) {
             <View pointerEvents="none" style={styles.highlight} />
             {item.icon === 'matching' ? (
               <MatchingIcon size={imageSize} />
-            ) : item.icon === 'tracing' || item.icon === 'number-tracing' ? (
+            ) : item.icon in TRACING_ICONS ? (
               <TracingIcon
                 size={imageSize}
-                variant={item.icon === 'number-tracing' ? 'number' : 'letter'}
+                variant={TRACING_ICONS[item.icon]}
               />
             ) : (
               <Image

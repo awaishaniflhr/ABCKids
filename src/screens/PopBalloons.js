@@ -7,7 +7,7 @@ import {
 import { BALLOON_LETTERS } from '../games/learningData';
 import FunnyLetter from '../components/FunnyLetter';
 export const Number = BALLOON_LETTERS;
-export default function PoppBalloonsTemplate({ navigation }) {
+export default function PopBalloons({ navigation }) {
   return (
     <ActivityScreen
       navigation={navigation}

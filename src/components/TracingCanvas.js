@@ -1,6 +1,6 @@
 import React, { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { Animated, Easing, StyleSheet, Text, View } from 'react-native';
-import Svg, { Circle, Path } from 'react-native-svg';
+import Svg, { Circle, Path, Text as SvgText } from 'react-native-svg';
 import {
   beginTrace,
   moveTrace,
@@ -8,12 +8,33 @@ import {
   pointOnStroke,
   canvasGeometry,
   canvasPoint,
+  DEFAULT_BOX,
 } from '../games/tracingLetters';
 
-function Guide({ stroke, progress, layout, color, animate, number }) {
+export const DEFAULT_THEME = {
+  outline: '#AAA4E3',
+  paper: '#FFFEFC',
+  dots: '#C1B9EC',
+  idleDots: '#E1DEF2',
+  outlineWidth: 57,
+  paperWidth: 45,
+  beacon: 34,
+  startDots: false,
+};
+
+function Guide({
+  stroke,
+  progress,
+  layout,
+  box,
+  color,
+  animate,
+  number,
+  size,
+}) {
   const travel = useRef(new Animated.Value(0)).current;
   const pulse = useRef(new Animated.Value(0)).current;
-  const { scale, left, top } = canvasGeometry(layout.width, layout.height);
+  const { scale, left, top } = canvasGeometry(layout.width, layout.height, box);
   const start = pointOnStroke(stroke, progress);
   const stops = Array.from({ length: 41 }, (_, index) =>
     pointOnStroke(stroke, progress + ((stroke.length - progress) * index) / 40),
@@ -69,8 +90,11 @@ function Guide({ stroke, progress, layout, color, animate, number }) {
         style={[
           styles.beacon,
           {
-            left: left + start.x * scale - 17,
-            top: top + start.y * scale - 17,
+            width: size,
+            height: size,
+            borderRadius: size / 2,
+            left: left + start.x * scale - size / 2,
+            top: top + start.y * scale - size / 2,
             backgroundColor: color,
             transform: [
               {
@@ -83,7 +107,9 @@ function Guide({ stroke, progress, layout, color, animate, number }) {
           },
         ]}
       >
-        <Text style={styles.number}>{number}</Text>
+        <Text style={[styles.number, { fontSize: size * 0.47 }]}>
+          {number}
+        </Text>
       </Animated.View>
       {animate && (
         <Animated.View
@@ -133,7 +159,12 @@ export default memo(function TracingCanvas({
   helpKey,
   onChange,
   onMotion,
+  theme: themeOverride,
 }) {
+  const theme = themeOverride
+    ? { ...DEFAULT_THEME, ...themeOverride }
+    : DEFAULT_THEME;
+  const box = template.box || DEFAULT_BOX;
   const [layout, setLayout] = useState({ width: 0, height: 0 });
   const latest = useRef();
   const finger = useRef(null);
@@ -183,21 +214,32 @@ export default memo(function TracingCanvas({
       grantedStroke.current = current.trace.strokeIndex;
     }
     if (current.trace.strokeIndex !== grantedStroke.current) return;
+    const currentBox = current.template.box || DEFAULT_BOX;
     const point = canvasPoint(
       { x: contact.locationX, y: contact.locationY },
       current.layout.width,
       current.layout.height,
+      currentBox,
     );
     const { scale } = canvasGeometry(
       current.layout.width,
       current.layout.height,
+      currentBox,
     );
-    const tolerance = Math.max(26, Math.min(50, 18 / scale));
+    // Words draw smaller letters, so allow a little more wiggle room
+    // (measured on screen) than single big letters do.
+    const wordBoard = Boolean(current.template.box);
+    const tolerance = Math.max(
+      26,
+      Math.min(wordBoard ? 70 : 50, (wordBoard ? 20 : 18) / scale),
+    );
+    const endRadius = wordBoard ? Math.max(18, 14 / scale) : 18;
     const next = (start ? beginTrace : moveTrace)(
       current.trace,
       point,
       current.template.strokes,
       tolerance,
+      endRadius,
     );
     const advancing =
       !start &&
@@ -241,15 +283,15 @@ export default memo(function TracingCanvas({
         pointerEvents="none"
         width="100%"
         height="100%"
-        viewBox="0 0 400 400"
+        viewBox={`${box.x} ${box.y} ${box.width} ${box.height}`}
         preserveAspectRatio="xMidYMid meet"
       >
         {template.strokes.map((item, index) => (
           <Path
             key={`outline-${index}`}
             d={item.d}
-            stroke="#AAA4E3"
-            strokeWidth={57}
+            stroke={theme.outline}
+            strokeWidth={theme.outlineWidth}
             strokeLinecap="round"
             strokeLinejoin="round"
             fill="none"
@@ -259,8 +301,8 @@ export default memo(function TracingCanvas({
           <Path
             key={`paper-${index}`}
             d={item.d}
-            stroke="#FFFEFC"
-            strokeWidth={45}
+            stroke={theme.paper}
+            strokeWidth={theme.paperWidth}
             strokeLinecap="round"
             strokeLinejoin="round"
             fill="none"
@@ -270,7 +312,7 @@ export default memo(function TracingCanvas({
           <Path
             key={`dots-${index}`}
             d={item.d}
-            stroke={index === trace.strokeIndex ? '#C1B9EC' : '#E1DEF2'}
+            stroke={index === trace.strokeIndex ? theme.dots : theme.idleDots}
             strokeWidth={5}
             strokeDasharray={[1, 13]}
             strokeLinecap="round"
@@ -290,7 +332,7 @@ export default memo(function TracingCanvas({
               testID={`traced-stroke-${index}`}
               d={item.d}
               stroke={color}
-              strokeWidth={45}
+              strokeWidth={theme.paperWidth}
               strokeLinecap="round"
               strokeLinejoin="round"
               strokeDasharray={[item.length, item.length]}
@@ -299,6 +341,33 @@ export default memo(function TracingCanvas({
             />
           ) : null;
         })}
+        {theme.startDots &&
+          template.strokes.map((item, index) => {
+            if (index <= trace.strokeIndex) return null;
+            const first = item.points[0];
+            return (
+              <React.Fragment key={`start-${index}`}>
+                <Circle
+                  cx={first.x}
+                  cy={first.y}
+                  r={13}
+                  fill={theme.dots}
+                  stroke="#FFFFFF"
+                  strokeWidth={3}
+                />
+                <SvgText
+                  x={first.x}
+                  y={first.y + 6}
+                  fill="#FFFFFF"
+                  fontSize={16}
+                  fontWeight="bold"
+                  textAnchor="middle"
+                >
+                  {String(item.number ?? index + 1)}
+                </SvgText>
+              </React.Fragment>
+            );
+          })}
         {stroke && !trace.drawing && (
           <Circle
             cx={pointOnStroke(stroke, trace.progress).x}
@@ -315,9 +384,11 @@ export default memo(function TracingCanvas({
           stroke={stroke}
           progress={trace.progress}
           layout={layout}
+          box={box}
           color={color}
           animate={!reducedMotion}
-          number={trace.strokeIndex + 1}
+          number={stroke.number ?? trace.strokeIndex + 1}
+          size={theme.beacon}
         />
       )}
     </View>
@@ -327,15 +398,12 @@ const styles = StyleSheet.create({
   canvas: { flex: 1, minWidth: 0, minHeight: 0, overflow: 'hidden' },
   beacon: {
     position: 'absolute',
-    width: 34,
-    height: 34,
-    borderRadius: 17,
     borderWidth: 3,
     borderColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
     elevation: 3,
   },
-  number: { color: '#FFFFFF', fontWeight: '900', fontSize: 16 },
+  number: { color: '#FFFFFF', fontWeight: '900' },
   finger: { position: 'absolute', top: 0, left: 0 },
 });

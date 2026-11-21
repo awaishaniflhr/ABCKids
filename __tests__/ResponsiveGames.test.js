@@ -5,18 +5,18 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import Home from '../src/screens/Home';
 import Letters from '../src/screens/Letters';
 import Numbers from '../src/screens/Numbers';
-import PoppBalloonsTemplate from '../src/screens/PoppBalloonsTemplate';
+import PopBalloons from '../src/screens/PopBalloons';
 import Sounds from '../src/screens/Sounds';
 import SoundScreen from '../src/screens/SoundScreen';
 import BirdSound from '../src/screens/BirdSound';
+import VehicleSound from '../src/screens/VehicleSound';
+import InstrumentSound from '../src/screens/InstrumentSound';
 import LetterSound from '../src/screens/LetterSound';
 import NumberKeyboard from '../src/screens/NumberKeyboard';
 import Phone from '../src/screens/Phone';
 import Numeric from '../src/screens/Numeric';
 import MemoryFlipGame from '../src/screens/MemoryFlipGame';
-import AlphabetsShapes, {
-  shuffleTargets,
-} from '../src/screens/AlphabetsShapes';
+import AlphabetShapes, { shuffleTargets } from '../src/screens/AlphabetShapes';
 import DragLetters from '../src/screens/DragLetters';
 import ColorsTemplate from '../src/screens/ColorsTemplate';
 import Coloring from '../src/screens/Coloring';
@@ -154,16 +154,18 @@ test.each([
   Home,
   Letters,
   Numbers,
-  PoppBalloonsTemplate,
+  PopBalloons,
   Sounds,
   SoundScreen,
   BirdSound,
+  VehicleSound,
+  InstrumentSound,
   LetterSound,
   NumberKeyboard,
   Phone,
   Numeric,
   MemoryFlipGame,
-  AlphabetsShapes,
+  AlphabetShapes,
   DragLetters,
   ColorsTemplate,
   Coloring,
@@ -208,7 +210,7 @@ test('addition retains its question and correct answer while rotating', async ()
 });
 
 test('animal matching uses the rotated drop target and preserves completed matches', async () => {
-  await mount(AlphabetsShapes);
+  await mount(AlphabetShapes);
   targetBounds['Match Cat'] = { x: 220, y: 200, width: 90, height: 90 };
   let cat = screen.root
     .findAllByType(DragTile)
@@ -248,7 +250,7 @@ test('animal matching uses the rotated drop target and preserves completed match
 });
 
 test('animal matching forgives near-miss drops and hints after wrong tries', async () => {
-  await mount(AlphabetsShapes);
+  await mount(AlphabetShapes);
   const tile = name =>
     screen.root
       .findAllByType(DragTile)
