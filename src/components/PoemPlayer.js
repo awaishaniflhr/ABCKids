@@ -16,6 +16,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Sound from 'react-native-sound';
 import SingAlongBackdrop from './SingAlongBackdrop';
+import AppIcon from './AppIcon';
 import { activeLine, activeWord, formatTime } from '../games/poemLyrics';
 
 export const TICK_MS = 100;
@@ -444,7 +445,7 @@ export default function PoemPlayer({
               pressed && styles.pressed,
             ]}
           >
-            <Text style={styles.skipText}>{'⏮'}</Text>
+            <AppIcon name="back" size={60} />
           </Pressable>
           <Pressable
             accessibilityRole="button"
@@ -453,12 +454,11 @@ export default function PoemPlayer({
             onPress={audio.playing ? audio.pause : audio.play}
             style={({ pressed }) => [
               styles.playButton,
-              { backgroundColor: color },
               !audio.ready && styles.disabled,
               pressed && styles.pressed,
             ]}
           >
-            <Text style={styles.playText}>{audio.playing ? '❚❚' : '▶'}</Text>
+            <AppIcon name={audio.playing ? 'pause' : 'play'} size={84} />
           </Pressable>
           <Pressable
             accessibilityRole="button"
@@ -472,7 +472,7 @@ export default function PoemPlayer({
               pressed && styles.pressed,
             ]}
           >
-            <Text style={styles.skipText}>{'⏭'}</Text>
+            <AppIcon name="next" size={60} />
           </Pressable>
         </View>
         {audio.error ? (
@@ -611,29 +611,14 @@ const styles = StyleSheet.create({
   skip: {
     width: 60,
     height: 60,
-    borderRadius: 30,
-    backgroundColor: '#FFFFFFEE',
-    borderWidth: 3,
-    borderColor: '#7E8CF5',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  skipText: { fontSize: 24, color: '#5B5FD6' },
   playButton: {
     width: 84,
     height: 84,
-    borderRadius: 42,
-    borderWidth: 4,
-    borderColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
-    elevation: 6,
-  },
-  playText: {
-    color: '#FFFFFF',
-    fontSize: 32,
-    fontWeight: '900',
-    includeFontPadding: false,
   },
   disabled: { opacity: 0.35 },
   pressed: { opacity: 0.75, transform: [{ scale: 0.95 }] },

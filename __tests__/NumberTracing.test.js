@@ -50,19 +50,11 @@ function traceAll(template) {
 }
 
 describe('number tracing', () => {
-  it('has the numbers 1 to 10 in order', () => {
-    expect(TRACING_NUMBERS.map(item => item.letter)).toEqual([
-      '1',
-      '2',
-      '3',
-      '4',
-      '5',
-      '6',
-      '7',
-      '8',
-      '9',
-      '10',
-    ]);
+  it('has the numbers 1 to 20 in order', () => {
+    expect(TRACING_NUMBERS.map(item => item.letter)).toEqual(
+      Array.from({ length: 20 }, (_, index) => String(index + 1)),
+    );
+    expect(getTracingNumber(15).letter).toBe('15');
     expect(getTracingNumber(7).letter).toBe('7');
     expect(getTracingNumber('nope').letter).toBe('1');
   });
@@ -87,6 +79,7 @@ describe('number tracing', () => {
       const lesson = NUMBER_MODE.lesson(letter);
       expect(lesson.word).toBeTruthy();
       expect(lesson.image).toBeTruthy();
+      expect(lesson.doneText).toContain(lesson.word);
     });
   });
 

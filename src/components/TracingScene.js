@@ -7,7 +7,8 @@ import {
   Text,
   View,
 } from 'react-native';
-import Svg, { Circle, Path, Rect } from 'react-native-svg';
+import Svg, { Path, Rect } from 'react-native-svg';
+import AppIcon from './AppIcon';
 
 // Shared look for the full-screen tracing games (Word Tracing, Dot Tracing):
 // a night-blue backdrop, a Home button, big side arrows and a success card.
@@ -147,23 +148,7 @@ export function HomeButton({ onPress }) {
       hitSlop={8}
       style={({ pressed }) => [styles.home, pressed && styles.pressed]}
     >
-      <Svg width={54} height={46} viewBox="0 0 54 46">
-        <Rect x={9} y={18} width={36} height={26} rx={4} fill="#FFF3D6" />
-        <Path
-          d="M3 22 L27 3 L51 22"
-          stroke="#E2464B"
-          strokeWidth={8}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          fill="none"
-        />
-        <Rect x={22} y={27} width={11} height={17} rx={3} fill="#3D8BE8" />
-        <Rect x={12} y={25} width={7} height={7} rx={1.5} fill="#7FC4F5" />
-        <Rect x={36} y={25} width={7} height={7} rx={1.5} fill="#7FC4F5" />
-        <Circle cx={13} cy={37} r={2.5} fill="#F7A3A8" />
-        <Circle cx={41} cy={37} r={2.5} fill="#F7A3A8" />
-      </Svg>
-      <Text style={styles.homeLabel}>Home</Text>
+      <AppIcon name="home" size={52} />
     </Pressable>
   );
 }
@@ -184,39 +169,30 @@ export function Arrow({ direction, onPress, disabled, size, label }) {
         pressed && styles.pressed,
       ]}
     >
-      <Svg width={size * 0.62} height={size} viewBox="0 0 50 80">
-        <Path
-          d={back ? 'M38 10 L12 40 L38 70' : 'M12 10 L38 40 L12 70'}
-          stroke="#0A86C9"
-          strokeWidth={17}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          fill="none"
-          translateY={3}
-        />
-        <Path
-          d={back ? 'M38 10 L12 40 L38 70' : 'M12 10 L38 40 L12 70'}
-          stroke="#16B5F5"
-          strokeWidth={17}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          fill="none"
-        />
-      </Svg>
+      <AppIcon name={back ? 'back' : 'next'} size={size * 0.8} />
     </Pressable>
   );
 }
 
-export function Pill({ label, symbol, onPress }) {
+// A small round button; `icon` is an AppIcon name, `symbol` a text glyph.
+export function Pill({ label, icon, symbol, onPress }) {
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={label}
       onPress={onPress}
       hitSlop={6}
-      style={({ pressed }) => [styles.pill, pressed && styles.pressed]}
+      style={({ pressed }) => [
+        styles.pill,
+        icon && styles.iconPill,
+        pressed && styles.pressed,
+      ]}
     >
-      <Text style={styles.pillSymbol}>{symbol}</Text>
+      {icon ? (
+        <AppIcon name={icon} size={44} />
+      ) : (
+        <Text style={styles.pillSymbol}>{symbol}</Text>
+      )}
     </Pressable>
   );
 }
@@ -286,13 +262,6 @@ const styles = StyleSheet.create({
     includeFontPadding: false,
   },
   home: { alignItems: 'center', paddingHorizontal: 4 },
-  homeLabel: {
-    color: '#FFFFFF',
-    fontFamily: 'Poppins-Bold',
-    fontSize: 13,
-    marginTop: -2,
-    includeFontPadding: false,
-  },
   pill: {
     width: 40,
     height: 40,
@@ -301,6 +270,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: '#FFFFFF2E',
   },
+  iconPill: { width: 44, height: 44, backgroundColor: 'transparent' },
   pillSymbol: { color: '#FFFFFF', fontSize: 20, fontWeight: '900' },
   arrow: {
     minWidth: 56,

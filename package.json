@@ -25,6 +25,7 @@
     "react-native": "0.88.1",
     "react-native-animatable": "^1.4.0",
     "react-native-draggable": "^3.3.0",
+    "react-native-google-mobile-ads": "^17.4.0",
     "react-native-orientation-locker": "^1.7.0",
     "react-native-safe-area-context": "^5.5.2",
     "react-native-screens": "^4.30.1",

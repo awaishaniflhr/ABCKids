@@ -172,7 +172,7 @@ const ColumnMatchingGame = ({
                     <BackIcon style={styles.backIcon} />
                   </TouchableOpacity>
                   <TouchableOpacity onPress={() => handleModal()}>
-                    <Animatable.Image animation="pulse" easing="ease-out" iterationCount="infinite" style={styles.backIcon} source={require('../assets/reloadBtn.png')}></Animatable.Image>
+                    <Animatable.Image animation="pulse" easing="ease-out" iterationCount="infinite" style={styles.backIcon} source={require('../assets/icons/replay.png')}></Animatable.Image>
                   </TouchableOpacity>
                 </View>
                 <Animated.View style={[{

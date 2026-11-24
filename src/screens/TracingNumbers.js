@@ -8,7 +8,7 @@ import {
 } from '../components/ActivityLayout';
 import { TRACING_NUMBERS } from '../games/tracingNumbers';
 import { readNumberTracingStars } from '../games/tracingProgress';
-import { COUNTING } from '../games/learningData';
+import { numberWord } from '../games/numberWords';
 
 export default function TracingNumbers({ navigation }) {
   const [stars, setStars] = useState([]);
@@ -45,9 +45,7 @@ export default function TracingNumbers({ navigation }) {
           <LearningCard
             width={width}
             height={height}
-            image={
-              COUNTING.find(entry => String(entry.count) === item.letter).imgf
-            }
+            image={numberWord(item.letter).image}
             label={`Trace number ${item.letter}`}
             caption={
               stars.includes(item.letter)

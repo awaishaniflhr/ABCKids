@@ -57,6 +57,39 @@ const guides = {
   ],
 };
 
+// ------------------------------------------------------------ 11 to 20
+// Two-digit numbers reuse the single-digit guides, shrunk to sit side by
+// side the way 10 does: the same narrow "1" on the left for 11-19, and a
+// "2" next to a "0" for 20.
+const ZERO = [arc(200, 215, 110, 160, -Math.PI / 2, -Math.PI / 2 - Math.PI * 2)];
+const TENS_ONE = guides[10][0];
+const DIGIT_TOP = 80;
+const DIGIT_HEIGHT = 240;
+
+// Shrinks `strokes` to DIGIT_HEIGHT tall and at most `maxWidth` wide, centred
+// on x = `centerX`.
+function place(strokes, centerX, maxWidth) {
+  const points = strokes.flat();
+  const xs = points.map(([x]) => x);
+  const ys = points.map(([, y]) => y);
+  const [minX, maxX] = [Math.min(...xs), Math.max(...xs)];
+  const [minY, maxY] = [Math.min(...ys), Math.max(...ys)];
+  const sy = DIGIT_HEIGHT / (maxY - minY);
+  const sx = Math.min(sy, maxWidth / (maxX - minX));
+  const midX = (minX + maxX) / 2;
+  return strokes.map(stroke =>
+    stroke.map(([x, y]) => [
+      centerX + (x - midX) * sx,
+      DIGIT_TOP + (y - minY) * sy,
+    ]),
+  );
+}
+
+for (let number = 11; number <= 19; number++) {
+  guides[number] = [TENS_ONE, ...place(guides[number - 10], 262, 150)];
+}
+guides[20] = [...place(guides[2], 118, 120), ...place(ZERO, 282, 120)];
+
 // `letter` holds the glyph so the shared tracing canvas and round can treat
 // numbers exactly like letters.
 export const TRACING_NUMBERS = Object.entries(guides)

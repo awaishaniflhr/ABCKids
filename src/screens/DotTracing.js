@@ -380,7 +380,7 @@ function DotRound({ index, onMove, onHome, active }) {
               {index + 1} / {DOT_LETTERS.length}
             </Text>
           </View>
-          <Pill label="Start again" symbol={'↻'} onPress={restart} />
+          <Pill label="Start again" icon="replay" onPress={restart} />
         </View>
       </View>
       {wide ? (

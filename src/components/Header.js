@@ -5,18 +5,15 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import React from 'react';
+import AppIcon from './AppIcon';
 
 const Header = () => {
   return (
     <View
       style={styles.container}>
       <View style={styles.buttons}>
-        <TouchableOpacity style={styles.MenuButton}>
-          <Image
-            resizeMode="contain"
-            source={require('../assets/share.png')}
-            style={styles.icon}
-          />
+        <TouchableOpacity accessibilityRole="button" accessibilityLabel="Share">
+          <AppIcon name="share" size={50} />
         </TouchableOpacity>
         <TouchableOpacity style={styles.MenuButton}>
           <Image

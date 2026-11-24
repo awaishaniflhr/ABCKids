@@ -210,7 +210,7 @@ const BalloonPopping = ({
                 <BackIcon style={styles.backIcon} />
               </TouchableOpacity>
               <TouchableOpacity onPress={handleReloadGame}>
-                <Image style={styles.backIcon} source={require('../assets/reloadBtn.png')} />
+                <Image style={styles.backIcon} source={require('../assets/icons/replay.png')} />
               </TouchableOpacity>
             </View>
             <Animated.View style={[{
@@ -258,7 +258,7 @@ const BalloonPopping = ({
                 <BackIcon style={styles.backIcon} />
               </TouchableOpacity>
               <TouchableOpacity onPress={handleReloadGame}>
-                <Image style={styles.backIcon} source={require('../assets/reloadBtn.png')} />
+                <Image style={styles.backIcon} source={require('../assets/icons/replay.png')} />
               </TouchableOpacity>
             </View>
             <Animated.View style={[{

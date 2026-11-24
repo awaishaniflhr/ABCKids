@@ -180,16 +180,12 @@ function GameArt({ item, size }) {
 }
 
 const TITLE_COLOR = '#2B2F77';
-const POP_MS = 3200; // one gentle pop every few seconds
+const POP_MS = 3200;
 
-// Room under the picture for the one-line title.
-export const titleRoom = width => Math.max(42, width * 0.25);
-
-// Font size of every Home card title. Change this number to resize them all.
-// A name too long for its card shrinks a little so it never gets cut off.
 const TITLE_FONT_SIZE = 18;
 
-// The title grows a little and springs back now and then, like a heartbeat.
+export const titleRoom = () => Math.round(TITLE_FONT_SIZE * 1.5) + 12;
+
 function PopTitle({ text, delay }) {
   const reduced = useReducedMotion();
   const pop = useRef(new Animated.Value(0)).current;
@@ -260,7 +256,9 @@ const GameCard = memo(function GameCard({
   );
 });
 
-export default function Games({ navigation }) {
+// `bottomSpace` is extra room after the last row, so the grid can run to the
+// bottom of the screen and its last cards still scroll fully into view.
+export default function Games({ navigation, bottomSpace = 0 }) {
   const [layout, setLayout] = useState({ width: 0, height: 0 });
   const measureGrid = useCallback(({ nativeEvent: { layout: next } }) => {
     setLayout(previous =>
@@ -307,7 +305,10 @@ export default function Games({ navigation }) {
               />
             )}
             columnWrapperStyle={styles.row}
-            contentContainerStyle={styles.list}
+            contentContainerStyle={[
+              styles.list,
+              { paddingBottom: styles.list.paddingBottom + bottomSpace },
+            ]}
             showsVerticalScrollIndicator={false}
             initialNumToRender={12}
             removeClippedSubviews={false}

@@ -189,8 +189,8 @@ function WordRound({ item, index, total, onMove, onHome, active }) {
               {index + 1} / {total}
             </Text>
           </View>
-          <Pill label={`Hear ${item.word}`} symbol={'♫'} onPress={hear} />
-          <Pill label="Start again" symbol={'↻'} onPress={restart} />
+          <Pill label={`Hear ${item.word}`} icon="sound" onPress={hear} />
+          <Pill label="Start again" icon="replay" onPress={restart} />
         </View>
       </View>
       {wide ? (

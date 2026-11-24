@@ -2,7 +2,7 @@ import React from 'react';
 import { TracingRound } from './LetterTracing';
 import { getTracingNumber, TRACING_NUMBERS } from '../games/tracingNumbers';
 import { saveNumberTracingStar } from '../games/tracingProgress';
-import { COUNTING } from '../games/learningData';
+import { numberWord } from '../games/numberWords';
 
 export const NUMBER_MODE = {
   title: 'Number Tracing',
@@ -13,13 +13,13 @@ export const NUMBER_MODE = {
   items: TRACING_NUMBERS,
   save: saveNumberTracingStar,
   lesson(number) {
-    const item = COUNTING.find(entry => String(entry.count) === number);
+    const item = numberWord(number);
     return {
-      word: item.numbers,
-      image: item.imgf,
-      badge: item.imgf,
-      pronounce: item.numbers,
-      doneText: `Wonderful! You traced ${number}, ${item.numbers}.`,
+      word: item.word,
+      image: item.image,
+      badge: item.image,
+      pronounce: item.word,
+      doneText: `Wonderful! You traced ${number}, ${item.word}.`,
     };
   },
 };

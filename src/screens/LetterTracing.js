@@ -15,6 +15,7 @@ import {
 import { useIsFocused } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import BackButton from '../components/BackButton';
+import AppIcon from '../components/AppIcon';
 import TraceBuddy from '../components/TraceBuddy';
 import TracingCanvas from '../components/TracingCanvas';
 import FunnyLetter from '../components/FunnyLetter';
@@ -155,7 +156,8 @@ function Celebration({ animate, nextLetter, compact, finishText }) {
   );
 }
 
-function Control({ label, symbol, onPress, disabled, primary }) {
+// `icon` is an AppIcon name; `symbol` is a text glyph for the rest.
+function Control({ label, icon, symbol, onPress, disabled, primary }) {
   return (
     <Pressable
       accessibilityRole="button"
@@ -170,9 +172,13 @@ function Control({ label, symbol, onPress, disabled, primary }) {
         pressed && styles.pressed,
       ]}
     >
-      <Text style={[styles.controlSymbol, primary && styles.primaryText]}>
-        {symbol}
-      </Text>
+      {icon ? (
+        <AppIcon name={icon} size={30} />
+      ) : (
+        <Text style={[styles.controlSymbol, primary && styles.primaryText]}>
+          {symbol}
+        </Text>
+      )}
       <Text
         numberOfLines={2}
         style={[styles.controlText, primary && styles.primaryText]}
@@ -544,14 +550,15 @@ export function TracingRound({ navigation, template, mode }) {
       >
         <Control
           label="Previous"
-          symbol={'\u2039'}
+          icon="back"
           disabled={index === 0}
           onPress={() => nextLetter(index - 1)}
         />
-        <Control label="Start again" symbol={'\u21bb'} onPress={reset} />
+        <Control label="Start again" icon="replay" onPress={reset} />
         <Control
           label={trace.complete ? 'Hear word' : 'Show me'}
-          symbol={trace.complete ? '\u266b' : '\u261d'}
+          icon={trace.complete ? 'sound' : undefined}
+          symbol={'\u261d'}
           onPress={showGuide}
         />
         <Control
@@ -560,7 +567,8 @@ export function TracingRound({ navigation, template, mode }) {
               ? mode.allLabel
               : `Next ${mode.noun.toLowerCase()}`
           }
-          symbol={index === items.length - 1 ? '\u2605' : '\u203a'}
+          icon={index === items.length - 1 ? undefined : 'next'}
+          symbol={'\u2605'}
           disabled={!trace.complete}
           primary
           onPress={() => nextLetter(index + 1)}

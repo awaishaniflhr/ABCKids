@@ -4,6 +4,7 @@ import { DefaultTheme, NavigationContainer } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import Routes from './src/routes/Routes';
 import SoundPlayer from './src/utills/SoundPlayer';
+import { initAds } from './src/services/ads';
 import Tts from 'react-native-tts';
 
 const navigationTheme = {
@@ -17,6 +18,10 @@ function stopAudio() {
 }
 
 export default function App() {
+  useEffect(() => {
+    initAds();
+  }, []);
+
   useEffect(() => {
     const subscription = AppState.addEventListener('change', state => {
       if (state !== 'active') {
