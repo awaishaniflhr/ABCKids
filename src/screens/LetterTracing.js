@@ -29,6 +29,9 @@ import { saveTracingStar } from '../games/tracingProgress';
 import { ALPHABET } from '../games/learningData';
 import useSpeech from '../games/useSpeech';
 import { createTracingAudio } from '../games/tracingAudio';
+import { GLASS_PINK } from '../components/glass';
+import { useScreenMusic } from '../services/audio';
+import { usePlayReminder } from '../services/reminders';
 
 export const TRACING_SUCCESS_MS = 3000;
 
@@ -163,7 +166,7 @@ function Control({ label, icon, symbol, onPress, disabled, primary }) {
       accessibilityRole="button"
       accessibilityLabel={label}
       accessibilityState={{ disabled: Boolean(disabled) }}
-      disabled={disabled}
+      disabled={Boolean(disabled)}
       onPress={onPress}
       style={({ pressed }) => [
         styles.control,
@@ -190,6 +193,8 @@ function Control({ label, icon, symbol, onPress, disabled, primary }) {
 }
 
 export function TracingRound({ navigation, template, mode }) {
+  // Calm, quiet music while tracing (keeps playing from letter to letter).
+  useScreenMusic('tracing');
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const wide = width > height;
@@ -201,6 +206,8 @@ export function TracingRound({ navigation, template, mode }) {
   const active = focused && foreground;
   const activeRef = useRef(active);
   activeRef.current = active;
+  // Leaving with letters still to trace sets a play reminder for later.
+  usePlayReminder(mode.reminder, active);
   const [reducedMotion, setReducedMotion] = useState(false);
   const [trace, setTrace] = useState(createTrace);
   const [color, setColor] = useState(PAINTS[0].color);
@@ -569,8 +576,9 @@ export function TracingRound({ navigation, template, mode }) {
           }
           icon={index === items.length - 1 ? undefined : 'next'}
           symbol={'\u2605'}
-          disabled={!trace.complete}
-          primary
+          // Always usable, so a child can skip ahead; it turns green once the
+          // letter is traced to show that's the next step. Skipping earns no star.
+          primary={trace.complete}
           onPress={() => nextLetter(index + 1)}
         />
       </View>
@@ -586,6 +594,7 @@ export const LETTER_MODE = {
   finishText: 'Back to your letters',
   items: TRACING_LETTERS,
   save: saveTracingStar,
+  reminder: 'letters',
   lesson(letter) {
     const item = ALPHABET.find(entry => entry.Letter === letter);
     const word = item.ImageName === 'IceCream' ? 'Ice cream' : item.ImageName;
@@ -615,12 +624,16 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: '#DAF5F7' },
   background: { ...StyleSheet.absoluteFill, width: '100%', height: '100%' },
   wash: { ...StyleSheet.absoluteFill, backgroundColor: '#D8F6F54D' },
+  // Full-width frosted glass across the top, like Home's header, with soft
+  // rounded bottom corners. The title sits straight on it.
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    paddingBottom: 6,
-    backgroundColor: '#FFFCF0EC',
+    paddingBottom: 8,
+    backgroundColor: GLASS_PINK,
+    borderBottomLeftRadius: 26,
+    borderBottomRightRadius: 26,
   },
   heading: { flex: 1 },
   title: {

@@ -144,23 +144,49 @@ export const pauseTrace = state => ({
   lastPoint: null,
 });
 
-export function beginTrace(state, point, strokes, tolerance = 28) {
-  if (state.complete) return state;
-  const checkpoint = pointOnStroke(strokes[state.strokeIndex], state.progress);
-  if (Math.hypot(point.x - checkpoint.x, point.y - checkpoint.y) > tolerance) {
-    return { ...pauseTrace(state), offTrack: true };
-  }
-  return { ...state, drawing: true, lastPoint: point, offTrack: false };
+// ------------------------------------------------- forgiving for small kids
+// Players are 3-10 years old, so a stroke doesn't demand pixel-perfect
+// finishing:
+// - it counts as done once the finger gets close to its end (END_SLACK);
+// - lifting the finger with only a little left still finishes it (LIFT_SLACK);
+// - after lifting, the finger can go back down anywhere on the part already
+//   traced (even the first dot) and carry on.
+// Both slacks grow with the stroke's length, within these limits (in the
+// 400 x 400 drawing space).
+const slack = (stroke, share, min, max) =>
+  Math.min(max, Math.max(min, stroke.length * share));
+const endSlack = stroke => slack(stroke, 0.1, 20, 40);
+const liftSlack = stroke => slack(stroke, 0.18, 30, 60);
+
+function finishStroke(state, strokes) {
+  const strokeIndex = state.strokeIndex + 1;
+  return {
+    ...createTrace(),
+    strokeIndex,
+    complete: strokeIndex === strokes.length,
+  };
 }
 
-function project(stroke, point, progress, tolerance) {
+// Where along the stroke is `point`, if it is on the part already traced
+// (or at the current checkpoint)? Lets a child lift and put their finger back
+// down anywhere they've drawn, even the first dot. Returns null when it isn't.
+function onTracedPart(stroke, point, progress, tolerance) {
+  const checkpoint = pointOnStroke(stroke, progress);
+  if (Math.hypot(point.x - checkpoint.x, point.y - checkpoint.y) <= tolerance) {
+    return progress;
+  }
+  return project(stroke, point, 0, progress, tolerance);
+}
+
+// Nearest position along the stroke to `point`, searching only the stretch
+// between `from` and `to` (stroke distances), within `tolerance`.
+function project(stroke, point, from, to, tolerance) {
   let best = null;
   let bestDistance = tolerance;
   for (let index = 1; index < stroke.points.length; index++) {
     const a = stroke.points[index - 1];
     const b = stroke.points[index];
-    if (b.distance < progress - tolerance || a.distance > progress + 32)
-      continue;
+    if (b.distance < from || a.distance > to) continue;
     const dx = b.x - a.x;
     const dy = b.y - a.y;
     const t = Math.min(
@@ -179,6 +205,34 @@ function project(stroke, point, progress, tolerance) {
   return best;
 }
 
+export function beginTrace(state, point, strokes, tolerance = 28) {
+  if (state.complete) return state;
+  const stroke = strokes[state.strokeIndex];
+  const cursor = onTracedPart(stroke, point, state.progress, tolerance);
+  if (cursor === null) {
+    return { ...pauseTrace(state), offTrack: true };
+  }
+  return { ...state, drawing: true, lastPoint: point, cursor, offTrack: false };
+}
+
+// The finger lifted. A stroke that was nearly finished counts as finished;
+// otherwise it waits, keeping the progress made so far.
+export function releaseTrace(state, strokes) {
+  if (state.complete) return state;
+  const stroke = strokes[state.strokeIndex];
+  if (
+    state.drawing &&
+    state.progress > 0 &&
+    stroke.length - state.progress <= liftSlack(stroke)
+  ) {
+    return finishStroke(state, strokes);
+  }
+  return pauseTrace(state);
+}
+
+// `progress` is how much of the stroke has been traced (it never goes back);
+// `cursor` is where the finger is along it right now, which can be behind
+// `progress` when a child retraces part they've already drawn.
 export function moveTrace(
   state,
   point,
@@ -195,29 +249,33 @@ export function moveTrace(
     Math.ceil(Math.hypot(point.x - from.x, point.y - from.y) / 8),
   );
   let progress = state.progress;
+  let cursor = state.cursor ?? progress;
   for (let step = 1; step <= steps; step++) {
     const sample = {
       x: from.x + ((point.x - from.x) * step) / steps,
       y: from.y + ((point.y - from.y) * step) / steps,
     };
-    const projected = project(stroke, sample, progress, tolerance);
+    const projected = project(
+      stroke,
+      sample,
+      cursor - tolerance,
+      cursor + 32,
+      tolerance,
+    );
     if (projected === null)
       return { ...pauseTrace(state), progress, offTrack: true };
-    progress = Math.max(progress, projected);
+    cursor = projected;
+    progress = Math.max(progress, cursor);
     const end = stroke.points[stroke.points.length - 1];
     if (
-      progress >= stroke.length - 8 &&
-      Math.hypot(sample.x - end.x, sample.y - end.y) <= endRadius
+      progress >= stroke.length - endSlack(stroke) ||
+      (progress >= stroke.length - 8 &&
+        Math.hypot(sample.x - end.x, sample.y - end.y) <= endRadius)
     ) {
-      const strokeIndex = state.strokeIndex + 1;
-      return {
-        ...createTrace(),
-        strokeIndex,
-        complete: strokeIndex === strokes.length,
-      };
+      return finishStroke(state, strokes);
     }
   }
-  return { ...state, progress, lastPoint: point, offTrack: false };
+  return { ...state, progress, cursor, lastPoint: point, offTrack: false };
 }
 
 export const DEFAULT_BOX = { x: 0, y: 0, width: 400, height: 400 };

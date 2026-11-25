@@ -26,6 +26,13 @@ class MainActivity : ReactActivity() {
     enterFullscreen()
   }
 
+  // Tapping a play reminder while the app is already open: keep the new
+  // intent so JavaScript can read which game to open.
+  override fun onNewIntent(intent: Intent) {
+    setIntent(intent)
+    super.onNewIntent(intent)
+  }
+
   private fun enterFullscreen() {
     WindowCompat.getInsetsController(window, window.decorView).apply {
       systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE

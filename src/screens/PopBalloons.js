@@ -12,6 +12,7 @@ export default function PopBalloons({ navigation }) {
     <ActivityScreen
       navigation={navigation}
       title="Popped Letters"
+      glassHeader
       subtitle="Which letter shall we pop today?"
     >
       <ResponsiveGrid

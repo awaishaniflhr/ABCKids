@@ -1,7 +1,8 @@
 import React from 'react';
 import { Image, StyleSheet, Text, View } from 'react-native';
+import SettingsButton from './Settings';
 
-export default function HeaderNew({ activityCount }) {
+export default function HeaderNew() {
   return (
     <View style={styles.header}>
       <View style={styles.brand}>
@@ -19,9 +20,7 @@ export default function HeaderNew({ activityCount }) {
           <Text style={styles.subtitle}>Little steps. Big discoveries.</Text>
         </View>
       </View>
-      <View style={styles.badge}>
-        <Text style={styles.badgeText}>{activityCount} fun activities</Text>
-      </View>
+      <SettingsButton />
     </View>
   );
 }
@@ -58,23 +57,6 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-Medium',
     fontSize: 10,
     color: '#4d6881',
-    includeFontPadding: false,
-  },
-  badge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#ffffffdd',
-    borderColor: '#ffffff',
-    borderWidth: 2,
-    borderRadius: 22,
-    paddingHorizontal: 13,
-    paddingVertical: 8,
-    flexShrink: 0,
-  },
-  badgeText: {
-    fontFamily: 'Poppins-SemiBold',
-    fontSize: 11,
-    color: '#315574',
     includeFontPadding: false,
   },
 });

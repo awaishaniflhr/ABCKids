@@ -242,6 +242,8 @@ export default function MemoryFlipGame({ navigation }) {
     <ActivityScreen
       navigation={navigation}
       title="Fruit Memory"
+      homeHeader
+      headerTheme={MEMORY_HEADER}
       subtitle={`Level ${game.level + 1} · ${
         game.solved.length / 2
       } of ${pairs} pairs found`}
@@ -278,12 +280,17 @@ export default function MemoryFlipGame({ navigation }) {
           title={`Level ${game.level + 1} done!`}
           message={`You found all ${pairs} fruit pairs in ${game.moves} tries!`}
           replayLabel="Next level"
+          replayIcon="next"
           onReplay={() => start(game.level + 1)}
         />
       )}
     </ActivityScreen>
   );
 }
+
+// The board never scrolls, so the full-width glass bar always shows. Soft
+// peach-orange, matching the warm band of the background behind it.
+const MEMORY_HEADER = { glass: 'rgba(255, 214, 170, 0.85)' };
 
 const styles = StyleSheet.create({
   area: { flex: 1, alignItems: 'center', justifyContent: 'center' },

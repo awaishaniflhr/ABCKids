@@ -218,10 +218,12 @@ describe('balloon screen', () => {
     jest.useRealTimers();
   });
 
+  let navigation;
   function tree(route = { params: { Letter: 'A' } }) {
+    navigation = navigation || { goBack: jest.fn(), setParams: jest.fn() };
     return (
       <SafeAreaProvider>
-        <BalloonPopping navigation={{ goBack: jest.fn() }} route={route} />
+        <BalloonPopping navigation={navigation} route={route} />
       </SafeAreaProvider>
     );
   }
@@ -285,6 +287,35 @@ describe('balloon screen', () => {
     expect(hasLabel('Score 0 of 10')).toBe(true);
     expect(hasLabel('20 seconds left')).toBe(true);
     expect(buttons('Pop A balloon').length).toBeGreaterThan(0);
+  });
+
+  test('the Next icon on the finish card moves on to the next letter', () => {
+    navigation = undefined;
+    mount();
+    ReactTestRenderer.act(() =>
+      jest.advanceTimersByTime(ROUND_SECONDS * 1000 + 100),
+    );
+    expect(buttons('Next letter')).toHaveLength(1);
+    ReactTestRenderer.act(() => buttons('Next letter')[0].props.onPress());
+    expect(navigation.setParams).toHaveBeenCalledWith({
+      Letter: 'B',
+      ImageName: expect.any(String),
+    });
+    ReactTestRenderer.act(() =>
+      screen.update(tree({ params: { Letter: 'B' } })),
+    );
+    expect(hasLabel('Score 0 of 10')).toBe(true);
+    expect(hasLabel('20 seconds left')).toBe(true);
+  });
+
+  test('there is no Next icon after the last letter', () => {
+    navigation = undefined;
+    mount({ params: { Letter: 'Z' } });
+    ReactTestRenderer.act(() =>
+      jest.advanceTimersByTime(ROUND_SECONDS * 1000 + 100),
+    );
+    expect(buttons('Play again').length).toBeGreaterThan(0);
+    expect(buttons('Next letter')).toHaveLength(0);
   });
 
   test('pops on touch-down and ignores release or repeated events for the same balloon', () => {

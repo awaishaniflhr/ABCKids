@@ -341,7 +341,8 @@ export default function AlphabetShapes({ navigation }) {
     <ActivityScreen
       navigation={navigation}
       title="Match the Animals"
-      subtitle="Drag each animal to its shadow, or tap an animal and then its shadow"
+      homeHeader
+      subtitle="Drag each animal to its shadow"
     >
       <View
         accessible

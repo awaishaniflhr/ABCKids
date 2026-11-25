@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   AccessibilityInfo,
   AppState,
+  Pressable,
   StatusBar,
   StyleSheet,
   Text,
@@ -22,6 +23,14 @@ import { createTrace, pauseTrace } from '../games/tracingLetters';
 import { TRACING_WORDS } from '../games/tracingWords';
 import { createTracingAudio } from '../games/tracingAudio';
 import useSpeech from '../games/useSpeech';
+import AppIcon from '../components/AppIcon';
+import {
+  nextUnfinished,
+  readWordTracingDone,
+  saveWordTracingDone,
+} from '../games/tracingProgress';
+import { useScreenMusic } from '../services/audio';
+import { usePlayReminder } from '../services/reminders';
 
 export const WORD_SUCCESS_MS = 3000;
 
@@ -36,7 +45,8 @@ const BOARD_THEME = {
 const PAINTS = ['#4FC3F7', '#7BD389', '#FFB74D', '#B98AE0', '#F48FB1'];
 
 // ---------------------------------------------------------------- one word
-function WordRound({ item, index, total, onMove, onHome, active }) {
+// `onDone` is told once the word is fully traced, so it can be saved.
+function WordRound({ item, index, total, onMove, onHome, onDone, active }) {
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const wide = width > height;
@@ -103,6 +113,11 @@ function WordRound({ item, index, total, onMove, onHome, active }) {
     }, 700);
     return () => clearTimeout(timer);
   }, [trace.complete, item.word, speak]);
+  // Save the word as finished straight away, so it's kept even if the child
+  // leaves or the app closes before moving on.
+  useEffect(() => {
+    if (trace.complete) onDone?.(item.word);
+  }, [trace.complete, item.word, onDone]);
   useEffect(() => {
     if (!trace.complete || !active) return;
     const timer = setTimeout(() => onMove(index + 1), WORD_SUCCESS_MS);
@@ -220,11 +235,37 @@ function WordRound({ item, index, total, onMove, onHome, active }) {
 // ---------------------------------------------------------------- screen
 export default function WordTracing({ navigation, route }) {
   const start = Number(route?.params?.index);
-  const [index, setIndex] = useState(
-    Number.isInteger(start) && start >= 0 && start < TRACING_WORDS.length
-      ? start
-      : 0,
-  );
+  const startGiven =
+    Number.isInteger(start) && start >= 0 && start < TRACING_WORDS.length;
+  const [index, setIndex] = useState(startGiven ? start : 0);
+  // Calm, quiet music while tracing.
+  useScreenMusic('tracing');
+  // When a child comes back with some words already finished, offer to
+  // continue from the next unfinished word (or start over).
+  const [resumeAt, setResumeAt] = useState(null);
+  useEffect(() => {
+    if (startGiven) return undefined;
+    let mounted = true;
+    readWordTracingDone()
+      .then(done => {
+        const next = nextUnfinished(
+          TRACING_WORDS.map(item => item.word),
+          done,
+        );
+        if (mounted && next) {
+          setResumeAt(TRACING_WORDS.findIndex(item => item.word === next));
+        }
+      })
+      .catch(() => {});
+    return () => {
+      mounted = false;
+    };
+    // Only when the game opens.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  const onDone = useCallback(word => {
+    saveWordTracingDone(word).catch(() => {});
+  }, []);
   const focused = useIsFocused();
   const [foreground, setForeground] = useState(
     AppState.currentState !== 'background' &&
@@ -236,6 +277,8 @@ export default function WordTracing({ navigation, route }) {
     );
     return () => subscription.remove();
   }, []);
+  // Leaving with words still to trace sets a play reminder for later.
+  usePlayReminder('words', focused && foreground);
   const onMove = useCallback(
     target => {
       if (target < 0) return;
@@ -257,8 +300,66 @@ export default function WordTracing({ navigation, route }) {
         total={TRACING_WORDS.length}
         onMove={onMove}
         onHome={onHome}
-        active={focused && foreground}
+        onDone={onDone}
+        active={focused && foreground && resumeAt === null}
       />
+      {resumeAt !== null && (
+        <ResumeCard
+          word={TRACING_WORDS[resumeAt].word}
+          onContinue={() => {
+            setIndex(resumeAt);
+            setResumeAt(null);
+          }}
+          onStartOver={() => {
+            setIndex(0);
+            setResumeAt(null);
+          }}
+        />
+      )}
+    </View>
+  );
+}
+
+// "Welcome back" card: Continue with the next unfinished word, or start over.
+function ResumeCard({ word, onContinue, onStartOver }) {
+  return (
+    <View accessibilityViewIsModal style={styles.resumeLayer}>
+      <View style={styles.resumeCard}>
+        <Text accessibilityRole="header" style={styles.resumeTitle}>
+          Welcome back!
+        </Text>
+        <Text style={styles.resumeText}>Ready for the next word?</Text>
+        <View style={styles.resumeActions}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Start over"
+            onPress={onStartOver}
+            hitSlop={8}
+            style={({ pressed }) => [
+              styles.resumeOption,
+              pressed && styles.resumePressed,
+            ]}
+          >
+            <AppIcon name="replay" size={52} />
+            <Text style={styles.resumeLabel}>Start over</Text>
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`Continue with ${word}`}
+            onPress={onContinue}
+            hitSlop={8}
+            style={({ pressed }) => [
+              styles.resumeOption,
+              pressed && styles.resumePressed,
+            ]}
+          >
+            <AppIcon name="next" size={68} />
+            <Text style={[styles.resumeLabel, styles.resumeMain]}>
+              Continue: {word}
+            </Text>
+          </Pressable>
+        </View>
+      </View>
     </View>
   );
 }
@@ -301,6 +402,53 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: 8,
   },
+  resumeLayer: {
+    ...StyleSheet.absoluteFill,
+    zIndex: 10,
+    elevation: 10,
+    backgroundColor: '#0D1A5ACC',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20,
+  },
+  resumeCard: {
+    width: '100%',
+    maxWidth: 380,
+    alignItems: 'center',
+    paddingVertical: 20,
+    paddingHorizontal: 18,
+    borderRadius: 28,
+    backgroundColor: '#FFFAE9',
+    borderWidth: 4,
+    borderColor: '#F5CE6D',
+  },
+  resumeTitle: {
+    color: '#2B3A8C',
+    fontFamily: 'Poppins-Bold',
+    fontSize: 26,
+    includeFontPadding: false,
+  },
+  resumeText: {
+    color: '#5A6795',
+    fontFamily: 'Poppins-Medium',
+    fontSize: 14,
+    marginTop: 4,
+  },
+  resumeActions: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+    gap: 32,
+    marginTop: 16,
+  },
+  resumeOption: { alignItems: 'center', gap: 4 },
+  resumePressed: { opacity: 0.75, transform: [{ scale: 0.95 }] },
+  resumeLabel: {
+    color: '#5A6795',
+    fontFamily: 'Poppins-SemiBold',
+    fontSize: 13,
+  },
+  resumeMain: { color: '#1E7A4C', fontFamily: 'Poppins-Bold', fontSize: 15 },
   tip: {
     flex: 1,
     textAlign: 'center',

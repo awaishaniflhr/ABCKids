@@ -5,6 +5,8 @@
         <!-- Customize your theme here. -->
         <item name="android:editTextBackground">@drawable/rn_edit_text_material</item>
         <item name="android:windowFullscreen">true</item>
+        <!-- Shown while the app starts, so there is no white flash before the splash. -->
+        <item name="android:windowBackground">@color/splash_background</item>
     </style>
 
 </resources>

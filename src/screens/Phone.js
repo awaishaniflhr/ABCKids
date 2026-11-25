@@ -17,6 +17,7 @@ import {
 import { useReducedMotion } from '../components/SingAlongBackdrop';
 import { PHONE_ANIMALS } from '../games/learningData';
 import SoundPlayer from '../utills/SoundPlayer';
+import { GLASS_PINK } from '../components/glass';
 
 export const RING_MS = 3000; // the ringtone plays this long
 export const TALK_MS = 4000; // then the animal "talks" this long
@@ -331,6 +332,8 @@ export default function Phone({ navigation }) {
     <ActivityScreen
       navigation={navigation}
       title="Animal Phone"
+      homeHeader
+      headerTheme={PHONE_HEADER}
       subtitle="Tap an animal to give them a call"
     >
       <View
@@ -379,6 +382,10 @@ export default function Phone({ navigation }) {
     </ActivityScreen>
   );
 }
+
+// The phone fills the screen without scrolling, so the full-width glass bar
+// (Home's baby pink) always shows.
+const PHONE_HEADER = { glass: GLASS_PINK };
 
 const styles = StyleSheet.create({
   area: { flex: 1, alignItems: 'center', justifyContent: 'center' },

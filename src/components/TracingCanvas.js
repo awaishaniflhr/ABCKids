@@ -5,6 +5,7 @@ import {
   beginTrace,
   moveTrace,
   pauseTrace,
+  releaseTrace,
   pointOnStroke,
   canvasGeometry,
   canvasPoint,
@@ -182,11 +183,22 @@ export default memo(function TracingCanvas({
     latest.current.trace = next;
     latest.current.onChange(next);
   }
+  // The tracing was interrupted (screen left, layout changed): just pause.
   const cancel = useCallback(() => {
     latest.current.onMotion?.(false);
     finger.current = null;
     grantedStroke.current = null;
     if (latest.current.trace.drawing) update(pauseTrace(latest.current.trace));
+  }, []);
+  // The child lifted their finger: a nearly finished stroke counts as done.
+  const lift = useCallback(() => {
+    latest.current.onMotion?.(false);
+    finger.current = null;
+    grantedStroke.current = null;
+    const current = latest.current;
+    if (current.trace.drawing) {
+      update(releaseTrace(current.trace, current.template.strokes));
+    }
   }, []);
   useEffect(() => {
     if (!active) cancel();
@@ -229,9 +241,10 @@ export default memo(function TracingCanvas({
     // Words draw smaller letters, so allow a little more wiggle room
     // (measured on screen) than single big letters do.
     const wordBoard = Boolean(current.template.box);
+    // Kept generous for small fingers: a little beyond the drawn track.
     const tolerance = Math.max(
-      26,
-      Math.min(wordBoard ? 70 : 50, (wordBoard ? 20 : 18) / scale),
+      34,
+      Math.min(wordBoard ? 70 : 50, (wordBoard ? 22 : 20) / scale),
     );
     const endRadius = wordBoard ? Math.max(18, 14 / scale) : 18;
     const next = (start ? beginTrace : moveTrace)(
@@ -273,9 +286,9 @@ export default memo(function TracingCanvas({
             item => (item.identifier ?? 0) === finger.current,
           )
         )
-          cancel();
+          lift();
       }}
-      onResponderRelease={cancel}
+      onResponderRelease={lift}
       onResponderTerminate={cancel}
       onResponderTerminationRequest={() => true}
     >

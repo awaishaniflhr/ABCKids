@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Small white star for the play reminder in the status bar. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+  <path
+      android:fillColor="#FFFFFFFF"
+      android:pathData="M12,2.5l2.9,5.9 6.5,0.9 -4.7,4.6 1.1,6.5L12,17.3l-5.8,3.1 1.1,-6.5L2.6,9.3l6.5,-0.9z" />
+</vector>

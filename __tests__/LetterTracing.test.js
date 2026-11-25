@@ -392,13 +392,21 @@ describe('tracing screens', () => {
     });
   });
 
-  test('only awards a star and enables Next after every stroke is actually traced', async () => {
+  test('Next can skip a letter without tracing it, and gives no star', async () => {
+    await mount('K');
+    expect(button('Next letter').props.disabled).toBe(false);
+    await ReactTestRenderer.act(async () =>
+      button('Next letter').props.onPress(),
+    );
+    expect(navigation.setParams).toHaveBeenCalledWith({ letter: 'L' });
+    expect(AsyncStorage.setItem).not.toHaveBeenCalled();
+  });
+
+  test('only awards a star after every stroke is actually traced', async () => {
     await mount();
     const template = getTracingLetter('A');
-    expect(button('Next letter').props.disabled).toBe(true);
     await drawStroke(template.strokes[0]);
     expect(AsyncStorage.setItem).not.toHaveBeenCalled();
-    expect(button('Next letter').props.disabled).toBe(true);
     await drawStroke(template.strokes[1]);
     await drawStroke(template.strokes[2]);
     expect(button('Next letter').props.disabled).toBe(false);
@@ -411,7 +419,7 @@ describe('tracing screens', () => {
     await ReactTestRenderer.act(async () =>
       button('Start again').props.onPress(),
     );
-    expect(button('Next letter').props.disabled).toBe(true);
+    expect(button('Next letter').props.disabled).toBe(false);
     expect(
       screen.root.findAllByProps({ testID: 'traced-stroke-0' }),
     ).toHaveLength(0);
@@ -442,7 +450,7 @@ describe('tracing screens', () => {
     expect(
       screen.root.findAllByProps({ testID: 'traced-stroke-1' }),
     ).toHaveLength(0);
-    expect(button('Next letter').props.disabled).toBe(true);
+    expect(AsyncStorage.setItem).not.toHaveBeenCalled();
   });
 
   test('backgrounding cancels an active gesture without losing completed strokes', async () => {
@@ -483,7 +491,7 @@ describe('tracing screens', () => {
     await mount('Z');
     expect(button('Previous')).toBeDefined();
     expect(button('Show me')).toBeDefined();
-    expect(button('All letters').props.disabled).toBe(true);
+    expect(button('All letters').props.disabled).toBe(false);
     expect(screen.root.findAllByType(Text).length).toBeGreaterThan(0);
   });
 });

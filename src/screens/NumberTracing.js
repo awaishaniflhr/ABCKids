@@ -12,6 +12,7 @@ export const NUMBER_MODE = {
   finishText: 'Back to your numbers',
   items: TRACING_NUMBERS,
   save: saveNumberTracingStar,
+  reminder: 'numbers',
   lesson(number) {
     const item = numberWord(number);
     return {

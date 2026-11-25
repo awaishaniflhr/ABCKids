@@ -7,11 +7,15 @@ import {
   ResponsiveGrid,
 } from '../components/ActivityLayout';
 import { TRACING_LETTERS } from '../games/tracingLetters';
-import { readTracingStars } from '../games/tracingProgress';
+import { nextUnfinished, readTracingStars } from '../games/tracingProgress';
+import ContinueButton, { CONTINUE_SPACE } from '../components/ContinueButton';
 import FunnyLetter from '../components/FunnyLetter';
+import { GLASS_PINK } from '../components/glass';
+import { useScreenMusic } from '../services/audio';
 
 export default function TracingLetters({ navigation }) {
   const [stars, setStars] = useState([]);
+  useScreenMusic('tracing');
   useFocusEffect(
     useCallback(() => {
       let mounted = true;
@@ -25,20 +29,31 @@ export default function TracingLetters({ navigation }) {
       };
     }, []),
   );
+  // The first letter not traced yet (after A, B and C are done: D).
+  const next = nextUnfinished(
+    TRACING_LETTERS.map(item => item.letter),
+    stars,
+  );
   return (
     <ActivityScreen
       navigation={navigation}
       title="Letter Tracing"
-      subtitle="Choose a letter. Follow the dots and earn a star!"
+      glassHeader
+      headerRight={
+        <View
+          accessible
+          accessibilityLabel={`${stars.length} of 26 letter stars collected`}
+          style={styles.count}
+        >
+          <Text style={styles.countText}>
+            {stars.length}/{TRACING_LETTERS.length}
+          </Text>
+        </View>
+      }
     >
-      <View style={styles.progress}>
-        <Text style={styles.progressText}>
-          {stars.length} / 26 letter stars collected
-        </Text>
-        <Text style={styles.star}>{'\u2605'}</Text>
-      </View>
       <ResponsiveGrid
         data={TRACING_LETTERS.map(item => ({ ...item, id: item.letter }))}
+        bottomSpace={next ? CONTINUE_SPACE : 0}
         minWidth={100}
         itemHeight={132}
         renderItem={({ item, width, height }) => (
@@ -61,17 +76,27 @@ export default function TracingLetters({ navigation }) {
           />
         )}
       />
+      {next ? (
+        <ContinueButton
+          label={next}
+          onPress={() => navigation.navigate('LetterTracing', { letter: next })}
+        />
+      ) : null}
     </ActivityScreen>
   );
 }
 const styles = StyleSheet.create({
-  progress: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 12,
-    paddingBottom: 8,
+  // Stars collected, top right of the header, on the same glass as the title.
+  count: {
+    backgroundColor: GLASS_PINK,
+    borderRadius: 18,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
   },
-  progressText: { color: '#46617E', fontSize: 13, fontWeight: '700' },
-  star: { color: '#EBAE35', fontSize: 24 },
+  countText: {
+    fontFamily: 'Poppins-Bold',
+    fontSize: 16,
+    color: '#284B67',
+    includeFontPadding: false,
+  },
 });

@@ -24,6 +24,8 @@ import { useIsFocused } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Tts from 'react-native-tts';
 import BackButton from '../components/BackButton';
+import AppIcon from '../components/AppIcon';
+import { BALLOON_LETTERS } from '../games/learningData';
 import FunnyLetter from '../components/FunnyLetter';
 import SoundPlayer from '../utills/SoundPlayer';
 import {
@@ -106,7 +108,8 @@ function PopFeedback({ pop, targetLetter }) {
     </Animated.View>
   );
 }
-function RoundResult({ round, navigation, onReplay, insets }) {
+// `onNext` is missing on the last letter, so the Next icon is hidden there.
+function RoundResult({ round, navigation, onReplay, onNext, insets }) {
   const { width, height } = useWindowDimensions();
   const compact = height < 400;
   const stars =
@@ -172,15 +175,30 @@ function RoundResult({ round, navigation, onReplay, insets }) {
           </Text>
         </ScrollView>
         <View style={styles.actions}>
-          <BackButton navigation={navigation} style={styles.resultBack} />
+          <BackButton navigation={navigation} size={RESULT_ICON} />
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Play again"
             onPress={onReplay}
+            hitSlop={8}
             style={({ pressed }) => [styles.replay, pressed && styles.pressed]}
           >
-            <Text style={styles.replayText}>Play again</Text>
+            <AppIcon name="replay" size={RESULT_ICON} />
           </Pressable>
+          {onNext ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Next letter"
+              onPress={onNext}
+              hitSlop={8}
+              style={({ pressed }) => [
+                styles.replay,
+                pressed && styles.pressed,
+              ]}
+            >
+              <AppIcon name="next" size={RESULT_ICON} />
+            </Pressable>
+          ) : null}
         </View>
       </View>
     </View>
@@ -612,6 +630,16 @@ export default function BalloonPopping({ navigation, route }) {
       type: 'reset',
     });
   }
+  // Move on to the next letter in the list and start a fresh round.
+  const letterIndex = BALLOON_LETTERS.findIndex(item => item.name === letter);
+  const nextLetter = BALLOON_LETTERS[letterIndex + 1];
+  function playNext() {
+    navigation.setParams({
+      Letter: nextLetter.name,
+      ImageName: nextLetter.ImageName,
+    });
+    replay();
+  }
   return (
     <View style={styles.screen}>
       <StatusBar hidden />
@@ -628,7 +656,11 @@ export default function BalloonPopping({ navigation, route }) {
           round.status !== 'playing' ? 'no-hide-descendants' : 'auto'
         }
       >
+        {/* The header floats over the sky with no background of its own, so
+            balloons keep rising behind it. Only the Back button takes taps;
+            balloons under the panels can still be popped. */}
         <View
+          pointerEvents="box-none"
           style={[
             styles.header,
             portraitHeader && styles.portraitHeader,
@@ -639,9 +671,9 @@ export default function BalloonPopping({ navigation, route }) {
             },
           ]}
         >
-          <View style={styles.headerMain}>
+          <View pointerEvents="box-none" style={styles.headerMain}>
             <BackButton navigation={navigation} />
-            <View style={styles.heading}>
+            <View pointerEvents="none" style={styles.heading}>
               <Text style={styles.title}>Pop the letter {letter}</Text>
               <Text style={styles.instructions}>
                 {round.timeLeft <= 8 && round.status === 'playing'
@@ -672,7 +704,7 @@ export default function BalloonPopping({ navigation, route }) {
               </View>
             </View>
           </View>
-          <View style={styles.stats}>
+          <View pointerEvents="none" style={styles.stats}>
             <View
               accessibilityLabel={`Score ${round.score} of ${TARGET_SCORE}`}
               style={styles.stat}
@@ -701,9 +733,9 @@ export default function BalloonPopping({ navigation, route }) {
           style={[
             styles.board,
             {
-              marginLeft: insets.left,
-              marginRight: insets.right,
-              marginBottom: insets.bottom,
+              left: insets.left,
+              right: insets.right,
+              bottom: insets.bottom,
             },
           ]}
         >
@@ -756,12 +788,23 @@ export default function BalloonPopping({ navigation, route }) {
           round={round}
           navigation={navigation}
           onReplay={replay}
+          onNext={nextLetter ? playNext : undefined}
           insets={insets}
         />
       )}
     </View>
   );
 }
+// Size of the back and replay icons on the result card.
+const RESULT_ICON = 56;
+
+// Clear, bubble-like frosted glass for this screen's sky theme.
+const BUBBLE_GLASS = {
+  backgroundColor: 'rgba(255, 255, 255, 0.42)',
+  borderWidth: 1.5,
+  borderColor: 'rgba(255, 255, 255, 0.85)',
+};
+
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
@@ -776,18 +819,27 @@ const styles = StyleSheet.create({
     height: '100%',
     opacity: 0.88,
   },
+  // Floats on top of the full-screen play area (see board).
   header: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 2,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
     paddingHorizontal: 12,
     paddingVertical: 6,
-    backgroundColor: '#fffaf0f5',
-    borderBottomWidth: 3,
-    borderBottomColor: '#ffd56c',
   },
+  // Header panels look like the soap bubbles: clear frosted white with a
+  // bright rim, so they sit naturally on the sky.
   heading: {
+    ...BUBBLE_GLASS,
     flex: 1,
+    borderRadius: 22,
+    paddingHorizontal: 14,
+    paddingVertical: 7,
   },
   headerMain: {
     flexGrow: 1,
@@ -806,13 +858,13 @@ const styles = StyleSheet.create({
   },
   instructions: {
     fontFamily: 'Poppins-Medium',
-    color: '#48667b',
+    color: '#2f5470',
     fontSize: 11,
     includeFontPadding: false,
   },
   progressTrack: {
-    height: 6,
-    backgroundColor: '#dce8e7',
+    height: 7,
+    backgroundColor: 'rgba(255, 255, 255, 0.75)',
     borderRadius: 4,
     overflow: 'hidden',
     marginTop: 4,
@@ -824,17 +876,18 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   stat: {
-    minWidth: 68,
+    ...BUBBLE_GLASS,
+    minWidth: 76,
     alignItems: 'center',
-    backgroundColor: '#e8f5fc',
-    borderRadius: 12,
-    paddingHorizontal: 10,
+    borderRadius: 18,
+    paddingHorizontal: 12,
     paddingVertical: 5,
   },
   statLabel: {
     fontSize: 10,
-    color: '#48667b',
+    color: '#2f5470',
     fontWeight: '700',
+    letterSpacing: 0.6,
   },
   statValue: {
     fontSize: 22,
@@ -844,8 +897,10 @@ const styles = StyleSheet.create({
   urgent: {
     color: '#ce3e45',
   },
+  // The whole screen, top to bottom, so balloons float up behind the header.
   board: {
-    flex: 1,
+    position: 'absolute',
+    top: 0,
     overflow: 'hidden',
   },
   sparkle: {
@@ -958,32 +1013,22 @@ const styles = StyleSheet.create({
     marginBottom: 4,
     textAlign: 'center',
   },
+  // Back and replay as two round icon buttons, side by side.
   actions: {
     flexDirection: 'row',
-    gap: 12,
+    justifyContent: 'center',
     alignItems: 'center',
+    gap: 22,
     marginTop: 8,
     flexShrink: 0,
   },
-  resultBack: {
-    backgroundColor: '#e8f5fc',
-    borderRadius: 14,
-  },
   replay: {
-    flex: 1,
+    minWidth: 48,
     minHeight: 48,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#138dbb',
-    borderRadius: 14,
-    paddingHorizontal: 22,
   },
   pressed: {
     opacity: 0.8,
-  },
-  replayText: {
-    color: 'white',
-    fontFamily: 'Poppins-SemiBold',
-    fontSize: 16,
   },
 });

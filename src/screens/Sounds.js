@@ -37,6 +37,7 @@ export default function Sounds({ navigation }) {
     <ActivityScreen
       navigation={navigation}
       title="Sounds"
+      glassHeader
       subtitle="Choose something fun to listen to"
     >
       <ResponsiveGrid

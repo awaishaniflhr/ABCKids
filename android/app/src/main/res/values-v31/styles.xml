@@ -1,0 +1,12 @@
+<resources>
+
+    <!-- Android 12+ always shows a short launch screen with the app icon.
+         Give it the splash colour so it flows into the animated splash. -->
+    <style name="AppTheme" parent="Theme.AppCompat.DayNight.NoActionBar">
+        <item name="android:editTextBackground">@drawable/rn_edit_text_material</item>
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowBackground">@color/splash_background</item>
+        <item name="android:windowSplashScreenBackground">@color/splash_background</item>
+    </style>
+
+</resources>

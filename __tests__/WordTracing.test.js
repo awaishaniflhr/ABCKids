@@ -135,7 +135,7 @@ describe('word tracing screen', () => {
     ReactTestRenderer.act(() => screen.unmount());
   });
 
-  it('shows a success message and moves to the next word by itself', () => {
+  it('shows a success message and moves to the next word by itself', async () => {
     const screen = mount({ goBack: jest.fn() });
     const canvas = screen.root.find(
       node => node.props.testID === 'tracing-canvas' && node.props.onLayout,
@@ -154,6 +154,14 @@ describe('word tracing screen', () => {
       screen.root.findAll(node => node.props.testID === 'word-success').length,
     ).toBeGreaterThan(0);
     expect(counter(screen)).toBe('1 / 26');
+    // The finished word is saved straight away, so it's kept if the app closes.
+    await ReactTestRenderer.act(async () => {});
+    expect(
+      require('@react-native-async-storage/async-storage').default.setItem,
+    ).toHaveBeenCalledWith(
+      '@abckids/word-tracing/v1/done',
+      JSON.stringify([TRACING_WORDS[0].word]),
+    );
     ReactTestRenderer.act(() => jest.advanceTimersByTime(WORD_SUCCESS_MS));
     expect(counter(screen)).toBe('2 / 26');
     expect(

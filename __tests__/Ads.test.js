@@ -33,8 +33,8 @@ describe('ads', () => {
     expect(sdk.InterstitialAd.createForAdRequest).not.toHaveBeenCalled();
   });
 
-  it('ships with ads switched off for now', () => {
-    expect(jest.requireActual('../src/services/adsConfig').ADS_ON).toBe(false);
+  it('ships with ads switched on', () => {
+    expect(jest.requireActual('../src/services/adsConfig').ADS_ON).toBe(true);
   });
 
   it('asks for child-safe, G-rated, non-personalised ads', async () => {

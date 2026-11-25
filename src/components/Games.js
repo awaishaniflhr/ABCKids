@@ -1,13 +1,12 @@
-import React, { memo, useCallback, useEffect, useRef, useState } from 'react';
-import {
-  Animated,
-  Easing,
-  FlatList,
-  Image,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import React, {
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+import { Animated, Easing, Image, StyleSheet, View } from 'react-native';
 import SoundPlayer from '../utills/SoundPlayer';
 import TracingIcon from './TracingIcon';
 import MatchingIcon from './MatchingIcon';
@@ -256,9 +255,16 @@ const GameCard = memo(function GameCard({
   );
 });
 
-// `bottomSpace` is extra room after the last row, so the grid can run to the
-// bottom of the screen and its last cards still scroll fully into view.
-export default function Games({ navigation, bottomSpace = 0 }) {
+// `topSpace` / `bottomSpace` are extra room before the first and after the
+// last row, so the grid can run under Home's floating header and to the bottom
+// of the screen while every card still scrolls fully into view. `scrollY`
+// (an Animated.Value) follows the scroll so Home can fade the header's glass.
+export default function Games({
+  navigation,
+  topSpace = 0,
+  bottomSpace = 0,
+  scrollY,
+}) {
   const [layout, setLayout] = useState({ width: 0, height: 0 });
   const measureGrid = useCallback(({ nativeEvent: { layout: next } }) => {
     setLayout(previous =>
@@ -281,16 +287,21 @@ export default function Games({ navigation, bottomSpace = 0 }) {
   );
   const cardWidth = (gridWidth - (columns - 1) * GAP) / columns;
   const cardHeight = pictureCardHeight(cardWidth, titleRoom(cardWidth));
+  const onScroll = useMemo(
+    () =>
+      scrollY
+        ? Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], {
+            useNativeDriver: true,
+          })
+        : undefined,
+    [scrollY],
+  );
 
   return (
     <View style={styles.container}>
-      <View style={styles.sectionHeading}>
-        <Text style={styles.heading}>Pick your next adventure</Text>
-        <Text style={styles.hint}>Tap to play</Text>
-      </View>
       <View style={styles.grid} onLayout={measureGrid}>
         {gridWidth > 0 && (
-          <FlatList
+          <Animated.FlatList
             key={columns}
             data={visibleGames}
             numColumns={columns}
@@ -307,8 +318,13 @@ export default function Games({ navigation, bottomSpace = 0 }) {
             columnWrapperStyle={styles.row}
             contentContainerStyle={[
               styles.list,
-              { paddingBottom: styles.list.paddingBottom + bottomSpace },
+              {
+                paddingTop: styles.list.paddingTop + topSpace,
+                paddingBottom: styles.list.paddingBottom + bottomSpace,
+              },
             ]}
+            onScroll={onScroll}
+            scrollEventThrottle={16}
             showsVerticalScrollIndicator={false}
             initialNumToRender={12}
             removeClippedSubviews={false}
@@ -321,27 +337,6 @@ export default function Games({ navigation, bottomSpace = 0 }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  sectionHeading: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 4,
-    paddingBottom: 8,
-    gap: 8,
-  },
-  heading: {
-    fontFamily: 'Poppins-SemiBold',
-    fontSize: 14,
-    color: '#294e6e',
-    flexShrink: 1,
-    includeFontPadding: false,
-  },
-  hint: {
-    fontFamily: 'Poppins-Medium',
-    fontSize: 10,
-    color: '#54768a',
-    includeFontPadding: false,
-  },
   grid: { flex: 1 },
   title: {
     color: TITLE_COLOR,

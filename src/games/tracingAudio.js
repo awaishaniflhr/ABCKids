@@ -1,5 +1,6 @@
 import { Platform } from 'react-native';
 import Sound from 'react-native-sound';
+import { areTracingSoundsOn } from '../services/audio';
 
 export const TRACING_IDLE_MS = 110;
 
@@ -59,7 +60,8 @@ export function createTracingAudio() {
   }
   return {
     move() {
-      if (released) return;
+      // The child turned tracing sounds off.
+      if (released || !areTracingSoundsOn()) return;
       moving = true;
       clearTimeout(idleTimer);
       // A stationary finger generates no move events. Silence that case too.
@@ -71,6 +73,7 @@ export function createTracingAudio() {
     celebrate() {
       if (released) return;
       stop();
+      if (!areTracingSoundsOn()) return;
       successPending = true;
       play(success);
     },

@@ -7,11 +7,17 @@ import {
   ResponsiveGrid,
 } from '../components/ActivityLayout';
 import { TRACING_NUMBERS } from '../games/tracingNumbers';
-import { readNumberTracingStars } from '../games/tracingProgress';
+import {
+  nextUnfinished,
+  readNumberTracingStars,
+} from '../games/tracingProgress';
+import ContinueButton, { CONTINUE_SPACE } from '../components/ContinueButton';
 import { numberWord } from '../games/numberWords';
+import { useScreenMusic } from '../services/audio';
 
 export default function TracingNumbers({ navigation }) {
   const [stars, setStars] = useState([]);
+  useScreenMusic('tracing');
   useFocusEffect(
     useCallback(() => {
       let mounted = true;
@@ -24,6 +30,11 @@ export default function TracingNumbers({ navigation }) {
         mounted = false;
       };
     }, []),
+  );
+  // The first number not traced yet.
+  const next = nextUnfinished(
+    TRACING_NUMBERS.map(item => item.letter),
+    stars,
   );
   return (
     <ActivityScreen
@@ -39,6 +50,7 @@ export default function TracingNumbers({ navigation }) {
       </View>
       <ResponsiveGrid
         data={TRACING_NUMBERS.map(item => ({ ...item, id: item.letter }))}
+        bottomSpace={next ? CONTINUE_SPACE : 0}
         minWidth={100}
         itemHeight={132}
         renderItem={({ item, width, height }) => (
@@ -61,6 +73,13 @@ export default function TracingNumbers({ navigation }) {
           />
         )}
       />
+      {next ? (
+        <ContinueButton
+          label={next}
+          bottom={14}
+          onPress={() => navigation.navigate('NumberTracing', { number: next })}
+        />
+      ) : null}
     </ActivityScreen>
   );
 }

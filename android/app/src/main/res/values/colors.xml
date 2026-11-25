@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Accent colour of the play reminder notification. -->
+    <color name="play_reminder">#7A5FD0</color>
+    <!-- Launch screen: same soft pink as the animated splash (SplashScreen.js). -->
+    <color name="splash_background">#FFDDEC</color>
+</resources>

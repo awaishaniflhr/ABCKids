@@ -9,6 +9,8 @@
 /* Begin PBXBuildFile section */
 		ABCD20261108000000000001 /* tracing_loop.wav in Resources */ = {isa = PBXBuildFile; fileRef = ABCD20261108000000000002 /* tracing_loop.wav */; };
 		ABCD20261108000000000003 /* tracing_success.wav in Resources */ = {isa = PBXBuildFile; fileRef = ABCD20261108000000000004 /* tracing_success.wav */; };
+		ABCD20261108000000000007 /* music_tracing.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = ABCD20261108000000000008 /* music_tracing.mp3 */; };
+		ABCD20261108000000000005 /* music_home.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = ABCD20261108000000000006 /* music_home.mp3 */; };
 		0C80B921A6F3F58F76C31292 /* libPods-ABCKids.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5DCACB8F33CDC322A6C60F78 /* libPods-ABCKids.a */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		761780ED2CA45674006654EE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 761780EC2CA45674006654EE /* AppDelegate.swift */; };
@@ -19,6 +21,8 @@
 /* Begin PBXFileReference section */
 		ABCD20261108000000000002 /* tracing_loop.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = ABCKids/tracing_loop.wav; sourceTree = "<group>"; };
 		ABCD20261108000000000004 /* tracing_success.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = ABCKids/tracing_success.wav; sourceTree = "<group>"; };
+		ABCD20261108000000000008 /* music_tracing.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = ABCKids/music_tracing.mp3; sourceTree = "<group>"; };
+		ABCD20261108000000000006 /* music_home.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = ABCKids/music_home.mp3; sourceTree = "<group>"; };
 		13B07F961A680F5B00A75B9A /* ABCKids.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ABCKids.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = ABCKids/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = ABCKids/Info.plist; sourceTree = "<group>"; };
@@ -49,6 +53,8 @@
 			children = (
 				ABCD20261108000000000002 /* tracing_loop.wav */,
 				ABCD20261108000000000004 /* tracing_success.wav */,
+				ABCD20261108000000000008 /* music_tracing.mp3 */,
+				ABCD20261108000000000006 /* music_home.mp3 */,
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
 				761780EC2CA45674006654EE /* AppDelegate.swift */,
 				761780EE2CA45674006654EF /* SceneDelegate.swift */,
@@ -168,6 +174,8 @@
 			files = (
 				ABCD20261108000000000001 /* tracing_loop.wav in Resources */,
 				ABCD20261108000000000003 /* tracing_success.wav in Resources */,
+				ABCD20261108000000000007 /* music_tracing.mp3 in Resources */,
+				ABCD20261108000000000005 /* music_home.mp3 in Resources */,
 				81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 			);

@@ -21,6 +21,7 @@ import {
 } from '../games/coloringTemplates';
 import useColoringDrawing from '../games/useColoringDrawing';
 import { exportColoring } from '../games/exportColoring';
+import { glassTitlePill } from '../components/glass';
 const ICONS = {
   Undo: 'M9 5 L4 10 L9 15 M4 10 H14 Q21 10 21 17 V20',
   Redo: 'M15 5 L20 10 L15 15 M20 10 H10 Q3 10 3 17 V20',
@@ -372,11 +373,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     paddingBottom: 8,
-    backgroundColor: '#FFFAF1',
   },
-  heading: {
-    flex: 1,
-  },
+  heading: glassTitlePill,
   title: {
     fontFamily: 'Poppins-Bold',
     fontSize: 23,

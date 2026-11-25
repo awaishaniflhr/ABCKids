@@ -20,14 +20,31 @@ const TestIds = sdk?.TestIds ?? {};
 // The App IDs live in app.json under "react-native-google-mobile-ads".
 const REAL_UNITS = Platform.select({
   ios: { banner: '', interstitial: '' },
-  default: { banner: '', interstitial: '' },
+  default: {
+    banner: 'ca-app-pub-2343503885430205/1720993270', // ABC Kids - Parent
+    interstitial: '',
+  },
 });
 
+// Google's own sample publisher: its App IDs and ad units only show test ads.
+const GOOGLE_TEST_PUBLISHER = 'ca-app-pub-3940256099942544';
+const appIds =
+  require('../../app.json')['react-native-google-mobile-ads'] ?? {};
+const APP_ID =
+  Platform.OS === 'ios' ? appIds.ios_app_id : appIds.android_app_id;
+const REAL_APP_ID =
+  typeof APP_ID === 'string' && !APP_ID.startsWith(GOOGLE_TEST_PUBLISHER);
+
+// Debug builds always use Google's test ads (never click your own real ads).
+// A release build only shows real ads, and only once both the real App ID
+// (app.json) and that ad unit's ID are filled in; otherwise that ad is
+// simply skipped, never replaced by a test ad.
 function unitId(kind, testId) {
-  return __DEV__ || !REAL_UNITS[kind] ? testId : REAL_UNITS[kind];
+  if (__DEV__) return testId ?? null;
+  return REAL_APP_ID && REAL_UNITS[kind] ? REAL_UNITS[kind] : null;
 }
 
-export const BANNER_UNIT_ID = unitId('banner', TestIds.ADAPTIVE_BANNER);
+export const BANNER_UNIT_ID = unitId('banner', TestIds.BANNER);
 const INTERSTITIAL_UNIT_ID = unitId('interstitial', TestIds.INTERSTITIAL);
 
 // This is a children's app: never personalised, child-directed, G-rated only.
@@ -43,10 +60,18 @@ const RETRY_AFTER_MS = 60 * 1000;
 // ---------------------------------------------------------- ads on / off
 // Turned off by the "Remove Ads" purchase later on.
 let enabled = ADS_ON && Boolean(sdk);
+// Set once the parent has bought "Remove Ads Forever": no ads anywhere,
+// whatever else asks for them.
+let adFree = false;
+
+export function setAdFree(value) {
+  adFree = Boolean(value);
+  if (adFree) setAdsEnabled(false);
+}
 const listeners = new Set();
 
 export function setAdsEnabled(value) {
-  value = Boolean(value && ADS_ON && sdk);
+  value = Boolean(value && ADS_ON && sdk && !adFree);
   if (enabled === value) return;
   enabled = value;
   listeners.forEach(listener => listener());
@@ -75,7 +100,7 @@ const startedAt = Date.now();
 
 // Call once when the app starts. Safe to call again.
 export function initAds() {
-  if (!ADS_ON || !sdk) return Promise.resolve();
+  if (!ADS_ON || !sdk || adFree) return Promise.resolve();
   started ??= Promise.resolve()
     .then(() =>
       sdk.default().setRequestConfiguration({
@@ -93,7 +118,7 @@ export function initAds() {
 }
 
 function loadInterstitial() {
-  if (!enabled) return;
+  if (!enabled || !INTERSTITIAL_UNIT_ID) return;
   try {
     if (!interstitial) {
       interstitial = sdk.InterstitialAd.createForAdRequest(
